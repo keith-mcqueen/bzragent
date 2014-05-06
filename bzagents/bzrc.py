@@ -15,10 +15,10 @@
 
 from __future__ import division
 
-import math
+#import math
 import sys
 import socket
-import time
+#import time
 
 
 class BZRC:
@@ -40,7 +40,7 @@ class BZRC:
     def handshake(self):
         """Perform the handshake with the remote tanks."""
         self.expect(('bzrobots', '1'), True)
-        print >>self.conn, 'agent 1'
+        print >> self.conn, 'agent 1'
 
     def close(self):
         """Close the socket."""
@@ -62,9 +62,10 @@ class BZRC:
 
     def sendline(self, line):
         """Send a line to the RC tanks."""
-        print >>self.conn, line
+        print >> self.conn, line
 
-    def die_confused(self, expected, got_arr):
+    @staticmethod
+    def die_confused(expected, got_arr):
         """When we think the RC tanks should have responded differently, call
         this method with a string explaining what should have been sent and
         with the array containing what was actually sent.
@@ -82,8 +83,8 @@ class BZRC:
         if full and len(expected) != len(line):
             good = False
         else:
-            for a,b in zip(expected,line):
-                if a!=b:
+            for a, b in zip(expected, line):
+                if a != b:
                     good = False
                     break
 
@@ -100,16 +101,16 @@ class BZRC:
 
         """
         line = self.read_arr()
-        for i,expected in enumerate(expecteds):
-            for a,b in zip(expected, line):
-                if a!=b:
+        for i, expected in enumerate(expecteds):
+            for a, b in zip(expected, line):
+                if a != b:
                     break
             else:
-                if not kwds.get('full',False) or len(expected) == len(line):
+                if not kwds.get('full', False) or len(expected) == len(line):
                     break
         else:
             self.die_confused(' or '.join(' '.join(one) for one in expecteds),
-                    line)
+                              line)
         return i, line[len(expected):]
 
     def read_ack(self):
@@ -127,7 +128,7 @@ class BZRC:
         UnexpectedResponse exception if we get something else.
 
         """
-        i, rest = self.expect_multi(('ok',),('fail',))
+        i, rest = self.expect_multi(('ok',), ('fail',))
         return (True, False)[i]
 
     def read_teams(self):
@@ -135,14 +136,14 @@ class BZRC:
         self.expect('begin')
         teams = []
         while True:
-            i, rest = self.expect_multi(('team',),('end',))
+            i, rest = self.expect_multi(('team',), ('end',))
             if i == 1:
                 break
             team = Answer()
             team.color = rest[0]
             team.count = float(rest[1])
             team.base = [(float(x), float(y)) for (x, y) in
-                    zip(rest[2:10:2], rest[3:10:2])]
+                         zip(rest[2:10:2], rest[3:10:2])]
             teams.append(team)
         return teams
 
@@ -151,11 +152,11 @@ class BZRC:
         self.expect('begin')
         obstacles = []
         while True:
-            i, rest = self.expect_multi(('obstacle',),('end',))
+            i, rest = self.expect_multi(('obstacle',), ('end',))
             if i == 1:
                 break
             obstacle = [(float(x), float(y)) for (x, y) in
-                    zip(rest[::2], rest[1::2])]
+                        zip(rest[::2], rest[1::2])]
             obstacles.append(obstacle)
         return obstacles
 
@@ -415,7 +416,7 @@ class BZRC:
         self.read_ack()
         shots = self.read_shots()
 
-        return (mytanks, othertanks, flags, shots)
+        return mytanks, othertanks, flags, shots
 
     def do_commands(self, commands):
         """Send commands for a bunch of tanks in a network-optimized way."""
@@ -469,7 +470,7 @@ class UnexpectedResponse(Exception):
 
     def __str__(self):
         return 'BZRC: Expected "%s".  Instead got "%s".' % (self.expected,
-                self.got)
+                                                            self.got)
 
 
 # vim: et sw=4 sts=4
