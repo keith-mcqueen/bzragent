@@ -34,26 +34,27 @@ class Agent(object):
         self.bzrc = bzrc
         self.constants = self.bzrc.get_constants()
         self.commands = []
-        self.mytanks = []
-        self.othertanks = []
+        self.my_tanks = []
+        self.other_tanks = []
         self.flags = []
         self.shots = []
         self.enemies = []
+        self.tank_target_angles = [None for _ in range(30)]
 
     def tick(self, time_diff):
         """Some time has passed; decide what to do next."""
-        mytanks, othertanks, flags, shots = self.bzrc.get_lots_o_stuff()
-        self.mytanks = mytanks
-        self.othertanks = othertanks
+        my_tanks, other_tanks, flags, shots = self.bzrc.get_lots_o_stuff()
+        self.my_tanks = my_tanks
+        self.other_tanks = other_tanks
         self.flags = flags
         self.shots = shots
-        self.enemies = [tank for tank in othertanks if tank.color != self.constants['team']]
+        self.enemies = [tank for tank in other_tanks if tank.color != self.constants['team']]
 
         # clear the commands
         self.commands = []
 
         # if it's been about 5 seconds, then do something stupid
-        for tank in mytanks:
+        for tank in my_tanks:
             self.behave_stupidly(tank, time_diff)
 
         self.bzrc.do_commands(self.commands)
@@ -95,21 +96,23 @@ class Agent(object):
 
     def behave_stupidly(self, tank, time_diff):
         """Make the tank move forward for a little while, turn left 60 degrees, then shoot"""
-        # if the tank's angle is within some margin of the target, stop rotating
-        math.
+        # if the tank's angle is within some margin of the target, stop rotating and then start moving again
+        target_angle = self.tank_target_angles[tank.index]
+        if target_angle is not None:
+            angle_diff = self.normalize_angle(target_angle - tank.angle)
+            if abs(angle_diff) <= math.pi / 72:
+                self.tank_target_angles[tank.index] = None
+                self.commands.append(Command(tank.index, 1, 0, False))
 
-        tank.target_angle = self.normalize_angle(tank.angle + math.pi / 3)
+        # if it has been ~5 secs, then...
+        if time_diff % 8 < 1:
+            # begin rotating the tank
+            self.tank_target_angles[tank.index] = self.normalize_angle(tank.angle + math.pi / 3)
+            self.commands.append(Command(tank.index, 0, 0.8, False))
 
-        # stop the tank
-        self.commands.append(Command(tank.index, 0, 0, False))
-
-        # rotate the tank -60 degrees and shoot
-        # We can set the angular velocity, but how do we rotate a 'fixed' number of degrees
-
-        # shoot
-
-        # move the tank forward
-        self.commands.append(Command(tank.index, 0.5, None, True))
+        # if it has been ~2 secs, then shoot
+        if time_diff % 2 < 1:
+            self.commands.append(Command(tank.index, shoot=True))
 
 
 def main():

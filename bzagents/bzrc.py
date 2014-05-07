@@ -433,15 +433,23 @@ class BZRC:
             if cmd.speed is not None:
                 self.read_ack()
                 result_speed = self.read_bool()
+            else :
+                result_speed = None
+
             if cmd.angvel is not None:
                 self.read_ack()
                 result_angvel = self.read_bool()
+            else:
+                result_angvel = None
+
             if cmd.shoot:
                 self.read_ack()
                 result_shoot = self.read_bool()
             else:
                 result_shoot = False
+
             results.append((result_speed, result_angvel, result_shoot))
+
         return results
 
 
@@ -458,7 +466,7 @@ class Answer(object):
 class Command(object):
     """Class for setting a command for a tank."""
 
-    def __init__(self, index, speed, angvel, shoot):
+    def __init__(self, index, speed=None, angvel=None, shoot=False):
         self.index = index
         self.speed = speed
         self.angvel = angvel
