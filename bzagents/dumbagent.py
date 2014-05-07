@@ -53,11 +53,10 @@ class Agent(object):
         self.commands = []
 
         # if it's been about 5 seconds, then do something stupid
-        if time_diff % 5 < 1:
-            for tank in mytanks:
-                self.behave_stupidly(tank)
+        for tank in mytanks:
+            self.behave_stupidly(tank, time_diff)
 
-            self.bzrc.do_commands(self.commands)
+        self.bzrc.do_commands(self.commands)
 
     def attack_enemies(self, tank):
         """Find the closest enemy and chase it, shooting as you go."""
@@ -94,11 +93,12 @@ class Agent(object):
             angle -= 2 * math.pi
         return angle
 
-    def behave_stupidly(self, tank):
+    def behave_stupidly(self, tank, time_diff):
         """Make the tank move forward for a little while, turn left 60 degrees, then shoot"""
-        print 'tank %s: behaving stupidly' % tank.callsign
+        # if the tank's angle is within some margin of the target, stop rotating
+        math.
 
-        relative_angle = tank.angle - math.pi / 3
+        tank.target_angle = self.normalize_angle(tank.angle + math.pi / 3)
 
         # stop the tank
         self.commands.append(Command(tank.index, 0, 0, False))
@@ -109,7 +109,7 @@ class Agent(object):
         # shoot
 
         # move the tank forward
-        self.commands.append(Command(tank.index, 0.5, 0, True))
+        self.commands.append(Command(tank.index, 0.5, None, True))
 
 
 def main():

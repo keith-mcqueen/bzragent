@@ -421,17 +421,21 @@ class BZRC:
     def do_commands(self, commands):
         """Send commands for a bunch of tanks in a network-optimized way."""
         for cmd in commands:
-            self.sendline('speed %s %s' % (cmd.index, cmd.speed))
-            self.sendline('angvel %s %s' % (cmd.index, cmd.angvel))
+            if cmd.speed is not None:
+                self.sendline('speed %s %s' % (cmd.index, cmd.speed))
+            if cmd.angvel is not None:
+                self.sendline('angvel %s %s' % (cmd.index, cmd.angvel))
             if cmd.shoot:
                 self.sendline('shoot %s' % cmd.index)
 
         results = []
         for cmd in commands:
-            self.read_ack()
-            result_speed = self.read_bool()
-            self.read_ack()
-            result_angvel = self.read_bool()
+            if cmd.speed is not None:
+                self.read_ack()
+                result_speed = self.read_bool()
+            if cmd.angvel is not None:
+                self.read_ack()
+                result_angvel = self.read_bool()
             if cmd.shoot:
                 self.read_ack()
                 result_shoot = self.read_bool()
