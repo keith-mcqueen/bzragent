@@ -5,9 +5,10 @@ intentionally avoided "giving it all away."
 
 from __future__ import division
 from itertools import cycle
+
 from bzrc import BZRC
 from masterfieldgen import MasterFieldGen
-from Vec2d import Vec2d
+
 
 try:
     from numpy import linspace
@@ -27,11 +28,11 @@ except ImportError:
         if endpoint:
             if num == 1:
                 return [float(start)]
-            step = (stop-start)/float((num-1))
+            step = (stop - start) / float((num - 1))
             y = [x * step + start for x in xrange(0, num - 1)]
             y.append(stop)
         else:
-            step = (stop-start)/float(num)
+            step = (stop - start) / float(num)
             y = [x * step + start for x in xrange(0, num)]
         if retstep:
             return y, step
@@ -66,12 +67,14 @@ fieldgen = MasterFieldGen(bzrc)
 def generate_field_function(scale):
     def function(x, y):
         '''User-defined field function.'''
-        vector = fieldgen.vectorAt(x, y)
+        vector = fieldgen.vector_at(x, y)
         return vector.x, vector.y
+
     return function
 
+
 OBSTACLES = [((0, 0), (-150, 0), (-150, -50), (0, -50)),
-                ((200, 100), (200, 330), (300, 330), (300, 100))]
+             ((200, 100), (200, 330), (300, 330), (300, 100))]
 
 
 ########################################################################
@@ -88,6 +91,7 @@ def gpi_point(x, y, vec_x, vec_y):
     return (x - vec_x * VEC_LEN / 2, y - vec_y * VEC_LEN / 2,
             vec_x * VEC_LEN, vec_y * VEC_LEN)
 
+
 def gnuplot_header(minimum, maximum):
     '''Return a string that has all of the gnuplot sets and unsets.'''
     s = ''
@@ -101,12 +105,14 @@ def gnuplot_header(minimum, maximum):
     #s += "set title 'Potential Fields'\n"
     return s
 
+
 def draw_line(p1, p2):
     '''Return a string to tell Gnuplot to draw a line from point p1 to
     point p2 in the form of a set command.'''
     x1, y1 = p1
     x2, y2 = p2
     return 'set arrow from %s, %s to %s, %s nohead lt 3\n' % (x1, y1, x2, y2)
+
 
 def draw_obstacles(obstacles):
     '''Return a string which tells Gnuplot to draw all of the obstacles.'''
@@ -120,6 +126,7 @@ def draw_obstacles(obstacles):
         s += draw_line(last_point, obs[0])
     return s
 
+
 def plot_field(function):
     '''Return a Gnuplot command to plot a field.'''
     s = "plot '-' with vectors head\n"
@@ -129,7 +136,7 @@ def plot_field(function):
     start = -end
 
     points = ((x, y) for x in linspace(start, end, SAMPLES)
-                for y in linspace(start, end, SAMPLES))
+              for y in linspace(start, end, SAMPLES))
 
     for x, y in points:
         f_x, f_y = function(x, y)
@@ -144,11 +151,11 @@ def plot_field(function):
 ########################################################################
 # Plot the potential fields to a file
 
-outfile = open(FILENAME, 'w')
-print >>outfile, gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2)
-print >>outfile, draw_obstacles(OBSTACLES)
-field_function = generate_field_function(150)
-print >>outfile, plot_field(field_function)
+# outfile = open(FILENAME, 'w')
+# print >> outfile, gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2)
+# print >> outfile, draw_obstacles(OBSTACLES)
+# field_function = generate_field_function(150)
+# print >> outfile, plot_field(field_function)
 
 
 ########################################################################
@@ -159,10 +166,11 @@ try:
 except ImportError:
     print "Sorry.  You don't have the Gnuplot module installed."
     import sys
+
     sys.exit(-1)
 
-forward_list = list(linspace(ANIMATION_MIN, ANIMATION_MAX, ANIMATION_FRAMES/2))
-backward_list = list(linspace(ANIMATION_MAX, ANIMATION_MIN, ANIMATION_FRAMES/2))
+forward_list = list(linspace(ANIMATION_MIN, ANIMATION_MAX, ANIMATION_FRAMES / 2))
+backward_list = list(linspace(ANIMATION_MAX, ANIMATION_MIN, ANIMATION_FRAMES / 2))
 anim_points = forward_list + backward_list
 
 gp = GnuplotProcess(persist=False)

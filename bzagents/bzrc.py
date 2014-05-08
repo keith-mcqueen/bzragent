@@ -435,7 +435,7 @@ class BZRC:
             if cmd.speed is not None:
                 self.read_ack()
                 result_speed = self.read_bool()
-            else :
+            else:
                 result_speed = None
 
             if cmd.angvel is not None:
