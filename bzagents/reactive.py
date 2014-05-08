@@ -9,6 +9,7 @@ import time
 
 from Vec2d import Vec2d
 from attractive import Attractive
+from tangential import Tangential
 from bzrc import BZRC, Command
 
 class Agent(object):
@@ -50,27 +51,26 @@ class Agent(object):
         self.commands.append(command)
 
     def use_potential_fields(self, tank, flag):
+        goal = flag
         if tank.flag != '-':
-            base = self.bases[0]
+            goal = self.bases[0]
             for dest in self.bases:
                 if dest.color == 'red':
-                    base = dest
+                    goal = dest
                     break
             
-            pull = Attractive(base)
-            field = pull.get_vector(tank)
-            target_angle = pull.get_angle(tank)
-            
-            relative_angle = self.normalize_angle(target_angle - tank.angle)
-            command = Command(tank.index, field.get_length(), 2 * relative_angle, True)
-            self.commands.append(command)
-        else:
-            pull = Attractive(flag)
-            field = pull.get_vector(tank)
-            target_angle = pull.get_angle(tank)
-            relative_angle = self.normalize_angle(target_angle - tank.angle)
-            command = Command(tank.index, field.get_length(), 2 * relative_angle, True)
-            self.commands.append(command)
+        pull = Attractive(goal)
+        field = pull.get_vector(tank)
+		#Add repulsive and tangential fields here to the field variable
+        for obstacle in self.obstacles:
+            wall = Tangential(obstacle)
+            tangent = wall.get_vector(tank)
+            field += tangent
+        
+        target_angle = field.angle
+        relative_angle = self.normalize_angle(target_angle - tank.angle)
+        command = Command(tank.index, field.get_length(), 2 * relative_angle, True)
+        self.commands.append(command)
     
     def normalize_angle(self, angle):
         """Make any angle be between +/- pi."""
