@@ -5,40 +5,51 @@ from vec2d import Vec2d
 
 class FlagsFieldGen(object):
     def __init__(self, bzrc):
+        # save teh controller
         self.bzrc = bzrc
+
+        # the threshold is the value at which the distance gives the greatest force
         self.threshold = 100
-        flags = bzrc.get_flags()
+
+        # use the callsign to determine which flag exclude
         self.callsign = bzrc.get_mytanks()[0].callsign
         self.enemy_colors = []
-        for flag in flags:
+        for flag in bzrc.get_flags():
             if not self.callsign.startswith(flag.color):
                 self.enemy_colors.append(flag.color)
                 print flag.color
 
     def vector_at(self, x, y):
-        flags = self.bzrc.get_flags()
+        # create a vector for the given location
         location_vector = Vec2d(x, y)
 
+        # prepare the resultant vector
         resultant_vector = Vec2d(0, 0)
 
-        for flag in flags:
-            if flag.color in self.enemy_colors:
-                # We create vector from flags position
-                flag_vector = Vec2d(flag.x, flag.y)
+        # for each flag, compute it's effect at the given location
+        for flag in self.bzrc.get_flags():
+            # if the flag is not one of our opponents' flag, then skip it
+            # IOW, if its our own flag, ignore it
+            if not flag.color in self.enemy_colors:
+                continue
 
-                # Get distance between two vectors
-                distance = location_vector.get_distance(flag_vector)
+            # create a vector for the flag's position
+            flag_vector = Vec2d(flag.x, flag.y)
 
-                force_vector = (flag_vector - location_vector).normalized()
+            # get the distance between the current flag and the given location
+            distance = location_vector.get_distance(flag_vector)
 
-                if distance < self.threshold:
-                    scale = distance / self.threshold
-                    force_vector *= scale
-                else:
-                    scale = self.threshold / distance
-                    force_vector *= scale
+            # normalize the vector to the flag
+            force_vector = (flag_vector - location_vector).normalized()
 
-                resultant_vector += force_vector
-                #return resultant_vector
+            # scale the vector according as a function of distance
+            if distance < self.threshold:
+                scale = distance / self.threshold
+            else:
+                scale = self.threshold / distance
+
+            # add the vector to the resultant
+            resultant_vector += force_vector * scale
+            #return resultant_vector
 
         return resultant_vector
