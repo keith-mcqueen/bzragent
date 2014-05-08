@@ -294,6 +294,8 @@ class BZRC:
                 base.corner3_y = float(line[7])
                 base.corner4_x = float(line[8])
                 base.corner4_y = float(line[9])
+                base.x = (base.corner3_x + base.corner1_x) / 2
+                base.y = (base.corner3_y + base.corner1_y) / 2
                 bases.append(base)
             elif line[0] == 'end':
                 break
