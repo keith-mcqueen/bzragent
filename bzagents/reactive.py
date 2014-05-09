@@ -7,10 +7,10 @@ import sys
 import math
 import time
 
-from Vec2d import Vec2d
 from attractive import Attractive
 from tangential import Tangential
 from bzrc import BZRC, Command
+
 
 class Agent(object):
     """Class handles all command and control logic for a teams tanks."""
@@ -30,7 +30,7 @@ class Agent(object):
         self.flags = flags
         self.shots = shots
         self.enemies = [tank for tank in othertanks if tank.color !=
-                        self.constants['team']]
+                                                       self.constants['team']]
 
         self.commands = []
 
@@ -58,23 +58,23 @@ class Agent(object):
                 if dest.color == 'red':
                     goal = dest
                     break
-            
+
         pull = Attractive(goal)
         field = pull.get_vector(tank)
-		#Add repulsive and tangential fields here to the field variable
+        #Add repulsive and tangential fields here to the field variable
         for obstacle in self.obstacles:
             wall = Tangential(obstacle)
             tangent = wall.get_vector(tank)
             field += tangent
-        
+
         target_angle = field.angle
         relative_angle = self.normalize_angle(target_angle - tank.angle)
         command = Command(tank.index, field.get_length(), 2 * relative_angle, True)
         self.commands.append(command)
-    
+
     def normalize_angle(self, angle):
         """Make any angle be between +/- pi."""
-        angle -= 2 * math.pi * int (angle / (2 * math.pi))
+        angle -= 2 * math.pi * int(angle / (2 * math.pi))
         if angle <= -math.pi:
             angle += 2 * math.pi
         elif angle > math.pi:
@@ -88,8 +88,8 @@ def main():
         execname, host, port = sys.argv
     except ValueError:
         execname = sys.argv[0]
-        print >>sys.stderr, '%s: incorrect number of arguments' % execname
-        print >>sys.stderr, 'usage: %s hostname port' % sys.argv[0]
+        print >> sys.stderr, '%s: incorrect number of arguments' % execname
+        print >> sys.stderr, 'usage: %s hostname port' % sys.argv[0]
         sys.exit(-1)
 
     # Connect.

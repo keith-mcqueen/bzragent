@@ -26,6 +26,7 @@ import time
 
 from bzrc import BZRC, Command
 
+
 class Agent(object):
     """Class handles all command and control logic for a teams tanks."""
 
@@ -42,7 +43,7 @@ class Agent(object):
         self.flags = flags
         self.shots = shots
         self.enemies = [tank for tank in othertanks if tank.color !=
-                        self.constants['team']]
+                                                       self.constants['team']]
 
         self.commands = []
 
@@ -58,7 +59,7 @@ class Agent(object):
         for enemy in self.enemies:
             if enemy.status != 'alive':
                 continue
-            dist = math.sqrt((enemy.x - tank.x)**2 + (enemy.y - tank.y)**2)
+            dist = math.sqrt((enemy.x - tank.x) ** 2 + (enemy.y - tank.y) ** 2)
             if dist < best_dist:
                 best_dist = dist
                 best_enemy = enemy
@@ -78,7 +79,7 @@ class Agent(object):
 
     def normalize_angle(self, angle):
         """Make any angle be between +/- pi."""
-        angle -= 2 * math.pi * int (angle / (2 * math.pi))
+        angle -= 2 * math.pi * int(angle / (2 * math.pi))
         if angle <= -math.pi:
             angle += 2 * math.pi
         elif angle > math.pi:
@@ -92,8 +93,8 @@ def main():
         execname, host, port = sys.argv
     except ValueError:
         execname = sys.argv[0]
-        print >>sys.stderr, '%s: incorrect number of arguments' % execname
-        print >>sys.stderr, 'usage: %s hostname port' % sys.argv[0]
+        print >> sys.stderr, '%s: incorrect number of arguments' % execname
+        print >> sys.stderr, 'usage: %s hostname port' % sys.argv[0]
         sys.exit(-1)
 
     # Connect.
