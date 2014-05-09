@@ -62,6 +62,7 @@ class BZRC:
 
     def sendline(self, line):
         """Send a line to the RC tanks."""
+        #print line
         print >> self.conn, line
 
     @staticmethod

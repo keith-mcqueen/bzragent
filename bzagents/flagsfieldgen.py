@@ -17,7 +17,6 @@ class FlagsFieldGen(object):
         for flag in bzrc.get_flags():
             if not self.callsign.startswith(flag.color):
                 self.enemy_colors.append(flag.color)
-                print flag.color
 
     def vector_at(self, x, y):
         # create a vector for the given location

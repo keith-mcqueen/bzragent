@@ -4,8 +4,8 @@ import sys
 import math
 import time
 
+from masterfieldgen import MasterFieldGen
 from bzrc import BZRC, Command
-from vec2d import Vec2d
 
 
 class Agent(object):
@@ -21,50 +21,40 @@ class Agent(object):
         self.shots = []
         self.enemies = []
 
+        self.master_field_gen = MasterFieldGen(bzrc)
+
     def tick(self, time_diff):
         """Some time has passed; decide what to do next."""
-        my_tanks, other_tanks, flags, shots = self.bzrc.get_lots_o_stuff()
-        self.my_tanks = my_tanks
-        self.other_tanks = other_tanks
-        self.flags = flags
-        self.shots = shots
-        self.enemies = [tank for tank in other_tanks if tank.color != self.constants['team']]
+        # my_tanks, other_tanks, flags, shots = self.bzrc.get_lots_o_stuff()
+        # self.my_tanks = my_tanks
+        # self.other_tanks = other_tanks
+        # self.flags = flags
+        # self.shots = shots
+        # self.enemies = [tank for tank in other_tanks if tank.color != self.constants['team']]
 
         # clear the commands
         self.commands = []
 
-        for tank in my_tanks:
+        for tank in self.bzrc.get_mytanks():
             self.direct_tank(tank)
 
         self.bzrc.do_commands(self.commands)
 
     def direct_tank(self, tank):
-        # get the tank's velocity vector
-        tank_vector = Vec2d(tank.vx, tank.vy)
-
         # get vector(s) for the potential fields around the tank
-        field_vectors = self.get_field_vectors(tank)
+        field_vector = self.get_field_vector(tank)
+        self.move_to_position(tank, field_vector[0], field_vector[1])
+        self.commands.append(Command(tank.index, speed=field_vector.get_length()))
 
-        # add up all the vector(s) from the potential fields to get the desired vector
-        # subtract the tank's current vector from the desired vector to get the change vector?
-        # use the change vector to get the tank to the desired vector?
-
-    def get_field_vectors(self, tank):
-        # where do I get the potential fields from?
-        # it would be nice if they were passed in as arguments to the __init__ method, or something
-        # it would also be nice if they were stored in a list so I could just iterate over them
-        #   then I could just invoke the same method on each one (something like, pf.get_vector(<bzrc>, <tank_loc>)
-        # collect the results into a list and return them
-        # --OR--
-        # do the vector sum here and return the resultant vector
-        pass
+    def get_field_vector(self, tank):
+        return self.master_field_gen.vector_at(tank.x, tank.y)
 
     def move_to_position(self, tank, target_x, target_y):
         """Set command to move to given coordinates."""
         target_angle = math.atan2(target_y - tank.y,
                                   target_x - tank.x)
         relative_angle = self.normalize_angle(target_angle - tank.angle)
-        self.commands.append(Command(tank.index, 1, 2 * relative_angle, True))
+        self.commands.append(Command(tank.index, 1, 2 * relative_angle, False))
 
     @staticmethod
     def normalize_angle(angle):
