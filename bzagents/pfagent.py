@@ -8,6 +8,7 @@ from masterfieldgen import MasterFieldGen
 from basesfieldgen import ReturnToBaseFieldGen
 from flagsfieldgen import FlagsFieldGen
 from enemiesfieldgen import EnemiesFieldGen
+from obstaclesfieldgen import ObstaclesFieldGen2
 from obstaclesfieldgen import ObstaclesFieldGen
 from basesfieldgen import LeaveHomeBaseFieldGen
 from bzrc import BZRC, Command
@@ -30,9 +31,11 @@ class Agent(object):
         self.master_field_gen = MasterFieldGen(bzrc, [FlagsFieldGen(bzrc),
                                                       EnemiesFieldGen(bzrc),
                                                       ObstaclesFieldGen(bzrc),
+                                                      ObstaclesFieldGen2(bzrc),
                                                       LeaveHomeBaseFieldGen(bzrc)])
         self.return_to_base = MasterFieldGen(bzrc, [EnemiesFieldGen(bzrc),
                                                     ObstaclesFieldGen(bzrc),
+                                                    ObstaclesFieldGen2(bzrc),
                                                     ReturnToBaseFieldGen(bzrc)])
         self.last_time_diff = 0
         self.k_p = 0.1
