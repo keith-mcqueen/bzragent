@@ -66,7 +66,7 @@ fieldgen = MasterFieldGen(bzrc)
 def generate_field_function(scale):
     def function(x, y):
         '''User-defined field function.'''
-        vector = fieldgen.vector_at(x, y)
+        vector, shoot = fieldgen.vector_at(x, y)
         return vector.x, vector.y
 
     return function

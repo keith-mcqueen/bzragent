@@ -24,7 +24,10 @@ class MasterFieldGen(object):
     def vector_at(self, x, y):
         resultant_vector = Vec2d(0, 0)
 
+        do_shoot = False
         for fieldGen in self.subfield_generators:
-            resultant_vector += fieldGen.vector_at(x, y)
+            field_vector, shoot = fieldGen.vector_at(x, y)
+            resultant_vector += field_vector
+            do_shoot = do_shoot or shoot
 
-        return resultant_vector
+        return resultant_vector, do_shoot

@@ -4,13 +4,15 @@ from vec2d import Vec2d
 
 
 class FlagsFieldGen(object):
-    def __init__(self, bzrc):
+    def __init__(self, bzrc, default_factor=1):
         # save the controller
         self.bzrc = bzrc
 
         # the threshold is the value at which the distance gives the greatest force
         self.threshold = 100
-        self.min_scale = 0.3
+        self.min_scale = 0.5
+        self.default_factor = default_factor
+        self.shoot = False
 
         # use the callsign to determine which flag exclude
         self.team = bzrc.get_constants()['team']
@@ -20,7 +22,7 @@ class FlagsFieldGen(object):
                 self.enemy_colors.append(flag.color)
 
     def vector_at(self, x, y):
-        factor = 1
+        factor = self.default_factor
 
         # determine if any of my tanks is holding a flag
         for tank in self.bzrc.get_mytanks():
@@ -60,9 +62,10 @@ class FlagsFieldGen(object):
             if distance < self.threshold:
                 scale = max(distance / self.threshold, self.min_scale)
             else:
-                scale = self.threshold / distance
+                #scale = self.threshold / distance
+                scale = 1
 
             # add the vector to the resultant
             resultant_vector = force_vector * scale * factor
 
-        return resultant_vector
+        return resultant_vector, self.shoot

@@ -21,50 +21,52 @@ class Agent(object):
         self.flags = []
         self.shots = []
         self.enemies = []
-
+        self.angle_diffs_by_tank = {}
         self.master_field_gen = MasterFieldGen(bzrc)
+        self.last_time_diff = 0
+        self.k_p = 0.1
+        self.k_d = 0.4
 
     def tick(self, time_diff):
         """Some time has passed; decide what to do next."""
-        # my_tanks, other_tanks, flags, shots = self.bzrc.get_lots_o_stuff()
-        # self.my_tanks = my_tanks
-        # self.other_tanks = other_tanks
-        # self.flags = flags
-        # self.shots = shots
-        # self.enemies = [tank for tank in other_tanks if tank.color != self.constants['team']]
-
         # clear the commands
         self.commands = []
 
+        # calculate the time differential
+        d_t = time_diff - self.last_time_diff
+
+        # save the current time_diff for next time (no pun intended)
+        self.last_time_diff = time_diff
+
         for tank in self.bzrc.get_mytanks():
-            self.direct_tank(tank)
-            # if time_diff % 2 < 1:
-            #     self.commands.append(Command(tank.index, shoot=True))
+            if tank.status.startswith('alive'):  # and tank.index == 0:
+                self.direct_tank(tank, d_t)
 
         self.bzrc.do_commands(self.commands)
 
-    def direct_tank(self, tank):
+    def direct_tank(self, tank, time_diff):
         # get vector(s) for the potential fields around the tank (this is the vector I want the tank to have)
-        field_vector = self.get_field_vector(tank)
+        field_vector, shoot = self.get_field_vector(tank)
 
         # get the tank's current velocity vector
         tank_vector = Vec2d(tank.vx, tank.vy)
 
         # get the angle between the desired and current vectors
-        relative_angle = self.normalize_angle(tank_vector.get_angle_between(field_vector))
+        angle_diff = self.normalize_angle(tank_vector.get_angle_between(field_vector))
+        if tank.callsign in self.angle_diffs_by_tank:
+            last_angle_diff = self.angle_diffs_by_tank[tank.callsign]
+        else:
+            last_angle_diff = angle_diff
+            self.angle_diffs_by_tank[tank.callsign] = angle_diff
+
+        d_e = (angle_diff - last_angle_diff) / time_diff
+        angvel = (self.k_p * angle_diff) + (self.k_d * d_e)
 
         # now set the speed and angular velocity
-        self.commands.append(Command(tank.index, speed=field_vector.get_length(), angvel=relative_angle))
+        self.commands.append(Command(tank.index, field_vector.get_length(), angvel, shoot))
 
     def get_field_vector(self, tank):
         return self.master_field_gen.vector_at(tank.x, tank.y)
-
-    def move_to_position(self, tank, target_x, target_y):
-        """Set command to move to given coordinates."""
-        target_angle = math.atan2(target_y - tank.y,
-                                  target_x - tank.x)
-        relative_angle = self.normalize_angle(target_angle - tank.angle)
-        self.commands.append(Command(tank.index, 1, 2 * relative_angle, False))
 
     @staticmethod
     def normalize_angle(angle):
