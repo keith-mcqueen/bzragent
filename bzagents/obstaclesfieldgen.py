@@ -1,11 +1,13 @@
 #!/usr/bin/python -tt
 
 from vec2d import Vec2d
+from masterfieldgen import FieldGen
 
 
-class ObstaclesFieldGen(object):
+class ObstaclesFieldGen(FieldGen):
     def __init__(self, bzrc, default_factor=1):
-        self.bzrc = bzrc
+        super(ObstaclesFieldGen, self).__init__(bzrc)
+
         self.offset = 40
         self.force = 1
         self.default_factor = default_factor

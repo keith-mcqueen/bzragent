@@ -1,15 +1,15 @@
 #!/usr/bin/python -tt
 
 from vec2d import Vec2d
+from masterfieldgen import FieldGen
 
 
-class FlagsFieldGen(object):
+class FlagsFieldGen(FieldGen):
     def __init__(self, bzrc, default_factor=1):
-        # save the controller
-        self.bzrc = bzrc
-
+        super(FlagsFieldGen, self).__init__(bzrc)
         # the threshold is the value at which the distance gives the greatest force
         self.threshold = 100
+        self.protective_threshold = 50
         self.min_scale = 0.5
         self.default_factor = default_factor
         self.shoot = False
@@ -25,10 +25,10 @@ class FlagsFieldGen(object):
         factor = self.default_factor
 
         # determine if any of my tanks is holding a flag
-        for tank in self.bzrc.get_mytanks():
-            if not tank.flag.startswith("-"):
-                factor = 0
-                break
+        # for tank in self.bzrc.get_mytanks():
+        #     if not tank.flag.startswith("-"):
+        #         factor = 0
+        #         break
 
         # create a vector for the given location
         location_vector = Vec2d(x, y)
@@ -42,7 +42,7 @@ class FlagsFieldGen(object):
         for flag in self.bzrc.get_flags():
             # if the flag is not one of our opponents' flag, then skip it
             # IOW, if its our own flag, ignore it
-            if not flag.color in self.enemy_colors:
+            if not flag.color in self.enemy_colors or flag.poss_color == self.team:
                 continue
 
             # create a vector for the flag's position

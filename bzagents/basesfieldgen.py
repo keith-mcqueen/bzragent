@@ -1,16 +1,17 @@
 #!/usr/bin/python -tt
 
+import abc
+
 from vec2d import Vec2d
+from masterfieldgen import FieldGen
 
 
-class BasesFieldGen(object):
+class BaseFieldGenBase(FieldGen):
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, bzrc, default_factor=1):
-        # save the controller
-        self.bzrc = bzrc
+        super(BaseFieldGenBase, self).__init__(bzrc)
 
-        # the threshold is the value at which the distance gives the greatest force
-        self.outer_threshold = 400
-        self.inner_threshold = 30
         self.default_factor = default_factor
         self.shoot = False
 
@@ -30,12 +31,6 @@ class BasesFieldGen(object):
     def vector_at(self, x, y):
         factor = self.default_factor
 
-        # determine if any of my tanks is holding a flag
-        for tank in self.bzrc.get_mytanks():
-            if not tank.flag.startswith("-"):
-                factor = -1
-                break
-
         # create a vector for the given location
         location_vector = Vec2d(x, y)
 
@@ -46,16 +41,31 @@ class BasesFieldGen(object):
         force_vector = (location_vector - self.my_base_center).normalized()
 
         # scale the vector according as a function of distance
-        if factor > 0:
-            if 0 < distance < self.outer_threshold:
-                scale = 1 / distance
-            else:
-                scale = 0
-        else:
-            if 0 < distance < self.inner_threshold:
-                scale = 0
-            else:
-                scale = 1
+        scale = self.get_scale(distance)
 
         # add the vector to the resultant
         return force_vector * scale * factor, self.shoot
+
+    @abc.abstractmethod
+    def get_scale(self, distance):
+        return
+
+
+class ReturnToBaseFieldGen(BaseFieldGenBase):
+    def __init__(self, bzrc, default_factor=-1):
+        super(ReturnToBaseFieldGen, self).__init__(bzrc, default_factor)
+
+    def get_scale(self, distance):
+        return 1
+
+
+class LeaveHomeBaseFieldGen(BaseFieldGenBase):
+    def __init__(self, bzrc, default_factor=1):
+        super(LeaveHomeBaseFieldGen, self).__init__(bzrc, default_factor)
+        self.outer_threshold = int(self.bzrc.get_constants()['worldsize']) / 2
+
+    def get_scale(self, distance):
+        if 0 < distance < self.outer_threshold:
+            return 1 / distance
+
+        return 0

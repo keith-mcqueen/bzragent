@@ -1,25 +1,25 @@
 #!/usr/bin/python -tt
+import abc
 
 from vec2d import Vec2d
 
-from flagsfieldgen import FlagsFieldGen
-from enemiesfieldgen import EnemiesFieldGen
-from obstaclesfieldgen import ObstaclesFieldGen
-from basesfieldgen import BasesFieldGen
 
+class FieldGen(object):
+    __metaclass__ = abc.ABCMeta
 
-class MasterFieldGen(object):
     def __init__(self, bzrc):
         self.bzrc = bzrc
-        self.subfield_generators = [FlagsFieldGen(bzrc),
-                                    EnemiesFieldGen(bzrc),
-                                    ObstaclesFieldGen(bzrc),
-                                    BasesFieldGen(bzrc)]
-        #self.subfield_generators = [FlagsFieldGen(bzrc)]
-        #self.subfield_generators = [EnemiesFieldGen(bzrc)]
-        #self.subfield_generators = [ObstaclesFieldGen(bzrc)]
-        #self.subfield_generators = [BasesFieldGen(bzrc)]
-        #self.subfield_generators = []
+
+    @abc.abstractmethod
+    def vector_at(self, x, y):
+        return
+
+
+class MasterFieldGen(FieldGen):
+    def __init__(self, bzrc, subfield_generators):
+        super(MasterFieldGen, self).__init__(bzrc)
+
+        self.subfield_generators = subfield_generators
 
     def vector_at(self, x, y):
         resultant_vector = Vec2d(0, 0)

@@ -5,6 +5,11 @@ import math
 import time
 
 from masterfieldgen import MasterFieldGen
+from basesfieldgen import ReturnToBaseFieldGen
+from flagsfieldgen import FlagsFieldGen
+from enemiesfieldgen import EnemiesFieldGen
+from obstaclesfieldgen import ObstaclesFieldGen
+from basesfieldgen import LeaveHomeBaseFieldGen
 from bzrc import BZRC, Command
 from vec2d import Vec2d
 
@@ -22,10 +27,16 @@ class Agent(object):
         self.shots = []
         self.enemies = []
         self.angle_diffs_by_tank = {}
-        self.master_field_gen = MasterFieldGen(bzrc)
+        self.master_field_gen = MasterFieldGen(bzrc, [FlagsFieldGen(bzrc),
+                                                      EnemiesFieldGen(bzrc),
+                                                      ObstaclesFieldGen(bzrc),
+                                                      LeaveHomeBaseFieldGen(bzrc)])
+        self.return_to_base = MasterFieldGen(bzrc, [EnemiesFieldGen(bzrc),
+                                                    ObstaclesFieldGen(bzrc),
+                                                    ReturnToBaseFieldGen(bzrc)])
         self.last_time_diff = 0
         self.k_p = 0.1
-        self.k_d = 0.4
+        self.k_d = 0.5
 
     def tick(self, time_diff):
         """Some time has passed; decide what to do next."""
@@ -39,8 +50,8 @@ class Agent(object):
         self.last_time_diff = time_diff
 
         for tank in self.bzrc.get_mytanks():
-            if tank.status.startswith('alive'):  # and tank.index == 0:
-                self.direct_tank(tank, d_t)
+            #if tank.status.startswith('alive'):  # and tank.index == 0:
+            self.direct_tank(tank, d_t)
 
         self.bzrc.do_commands(self.commands)
 
@@ -59,14 +70,17 @@ class Agent(object):
             last_angle_diff = angle_diff
             self.angle_diffs_by_tank[tank.callsign] = angle_diff
 
-        d_e = (angle_diff - last_angle_diff) / time_diff
+        d_e = (angle_diff - last_angle_diff) / (time_diff if time_diff != 0 else 0.01)
         angvel = (self.k_p * angle_diff) + (self.k_d * d_e)
 
         # now set the speed and angular velocity
         self.commands.append(Command(tank.index, field_vector.get_length(), angvel, shoot))
 
     def get_field_vector(self, tank):
-        return self.master_field_gen.vector_at(tank.x, tank.y)
+        if tank.flag == '-':
+            return self.master_field_gen.vector_at(tank.x, tank.y)
+
+        return self.return_to_base.vector_at(tank.x, tank.y)
 
     @staticmethod
     def normalize_angle(angle):

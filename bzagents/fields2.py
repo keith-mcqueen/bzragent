@@ -6,7 +6,7 @@ intentionally avoided "giving it all away."
 from __future__ import division
 
 from bzrc import BZRC
-from masterfieldgen import MasterFieldGen
+from pfagent import Agent
 
 
 try:
@@ -57,7 +57,7 @@ ANIMATION_MAX = 500
 ANIMATION_FRAMES = 50
 #BZRC
 bzrc = BZRC('localhost', 50005)
-fieldgen = MasterFieldGen(bzrc)
+pfagent = Agent(bzrc)
 
 
 ########################################################################
@@ -66,7 +66,9 @@ fieldgen = MasterFieldGen(bzrc)
 def generate_field_function(scale):
     def function(x, y):
         '''User-defined field function.'''
-        vector, shoot = fieldgen.vector_at(x, y)
+        vector, shoot = pfagent.master_field_gen.vector_at(x, y)
+        #vector, shoot = pfagent.return_to_base.vector_at(x, y)
+
         return vector.x, vector.y
 
     return function

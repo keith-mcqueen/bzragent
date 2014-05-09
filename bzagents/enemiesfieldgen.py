@@ -1,13 +1,15 @@
 #!/usr/bin/python -tt
 
 from vec2d import Vec2d
+from masterfieldgen import FieldGen
 
 
-class EnemiesFieldGen(object):
+class EnemiesFieldGen(FieldGen):
     def __init__(self, bzrc, default_factor=1):
-        self.bzrc = bzrc
+        super(EnemiesFieldGen, self).__init__(bzrc)
+
         self.threshold = 100
-        self.shooting_range = 50
+        self.shooting_range = 30
         self.default_factor = default_factor
         self.callsign = bzrc.get_mytanks()[0].callsign
 
