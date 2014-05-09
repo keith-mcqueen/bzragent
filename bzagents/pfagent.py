@@ -7,6 +7,7 @@ import time
 from masterfieldgen import MasterFieldGen
 from basesfieldgen import ReturnToBaseFieldGen
 from flagsfieldgen import FlagsFieldGen
+from flagsfieldgen import RecoverFlagFieldGen
 from enemiesfieldgen import EnemiesFieldGen
 from obstaclesfieldgen import ObstaclesFieldGen2
 from obstaclesfieldgen import ObstaclesFieldGen
@@ -37,6 +38,10 @@ class Agent(object):
                                                     ObstaclesFieldGen(bzrc),
                                                     ObstaclesFieldGen2(bzrc),
                                                     ReturnToBaseFieldGen(bzrc)])
+        self.recover_flag_strategy = MasterFieldGen(bzrc, [RecoverFlagFieldGen(bzrc),
+                                                           EnemiesFieldGen(bzrc),
+                                                           ObstaclesFieldGen(bzrc),
+                                                           ObstaclesFieldGen2(bzrc)])
         self.last_time_diff = 0
         self.k_p = 0.1
         self.k_d = 0.5
@@ -81,7 +86,9 @@ class Agent(object):
 
     def get_field_vector(self, tank):
         if tank.flag == '-':
-            return self.master_field_gen.vector_at(tank.x, tank.y)
+            if tank.index % 2 == 0:
+                return self.master_field_gen.vector_at(tank.x, tank.y)
+            return self.recover_flag_strategy.vector_at(tank.x, tank.y)
 
         return self.return_to_base.vector_at(tank.x, tank.y)
 
