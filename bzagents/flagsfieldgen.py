@@ -5,25 +5,36 @@ from vec2d import Vec2d
 
 class FlagsFieldGen(object):
     def __init__(self, bzrc):
-        # save teh controller
+        # save the controller
         self.bzrc = bzrc
 
         # the threshold is the value at which the distance gives the greatest force
         self.threshold = 100
+        self.min_scale = 0.3
 
         # use the callsign to determine which flag exclude
-        self.callsign = bzrc.get_mytanks()[0].callsign
+        self.team = bzrc.get_constants()['team']
         self.enemy_colors = []
         for flag in bzrc.get_flags():
-            if not self.callsign.startswith(flag.color):
+            if self.team != flag.color:
                 self.enemy_colors.append(flag.color)
 
     def vector_at(self, x, y):
+        factor = 1
+
+        # determine if any of my tanks is holding a flag
+        for tank in self.bzrc.get_mytanks():
+            if not tank.flag.startswith("-"):
+                factor = 0
+                break
+
         # create a vector for the given location
         location_vector = Vec2d(x, y)
 
         # prepare the resultant vector
         resultant_vector = Vec2d(0, 0)
+
+        best_distance = int(self.bzrc.get_constants()['worldsize'])
 
         # for each flag, compute it's effect at the given location
         for flag in self.bzrc.get_flags():
@@ -37,18 +48,21 @@ class FlagsFieldGen(object):
 
             # get the distance between the current flag and the given location
             distance = location_vector.get_distance(flag_vector)
+            if distance > best_distance:
+                continue
+
+            best_distance = distance
 
             # normalize the vector to the flag
             force_vector = (flag_vector - location_vector).normalized()
 
-            # scale the vector according as a function of distance
+            # scale the vector as a function of distance
             if distance < self.threshold:
-                scale = distance / self.threshold
+                scale = max(distance / self.threshold, self.min_scale)
             else:
                 scale = self.threshold / distance
 
             # add the vector to the resultant
-            resultant_vector += force_vector * scale
-            #return resultant_vector
+            resultant_vector = force_vector * scale * factor
 
         return resultant_vector

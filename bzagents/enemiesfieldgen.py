@@ -18,7 +18,7 @@ class EnemiesFieldGen(object):
 
         # for each enemy tank, compute it's effect at the given location
         for tank in self.bzrc.get_othertanks():
-            # create a vector for the flag's position
+            # create a vector for the tank's position
             tank_vector = Vec2d(tank.x, tank.y)
 
             # get the distance between the current tank and the given location
@@ -28,7 +28,7 @@ class EnemiesFieldGen(object):
             force_vector = (location_vector - tank_vector).normalized()
 
             # scale the vector according as a function of distance
-            if distance < self.threshold:
+            if 0 < distance < self.threshold:
                 scale = 1 / distance
             else:
                 scale = 0

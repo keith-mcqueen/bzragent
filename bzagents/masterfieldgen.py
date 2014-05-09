@@ -2,16 +2,23 @@
 
 from vec2d import Vec2d
 
+from flagsfieldgen import FlagsFieldGen
+from enemiesfieldgen import EnemiesFieldGen
 from obstaclesfieldgen import ObstaclesFieldGen
+from basesfieldgen import BasesFieldGen
 
 
 class MasterFieldGen(object):
     def __init__(self, bzrc):
         self.bzrc = bzrc
-        #self.subfield_generators = [FlagsFieldGen(bzrc), EnemiesFieldGen(bzrc), ObstaclesFieldGen(bzrc)]
+        self.subfield_generators = [FlagsFieldGen(bzrc),
+                                    EnemiesFieldGen(bzrc),
+                                    ObstaclesFieldGen(bzrc),
+                                    BasesFieldGen(bzrc)]
         #self.subfield_generators = [FlagsFieldGen(bzrc)]
         #self.subfield_generators = [EnemiesFieldGen(bzrc)]
-        self.subfield_generators = [ObstaclesFieldGen(bzrc)]
+        #self.subfield_generators = [ObstaclesFieldGen(bzrc)]
+        #self.subfield_generators = [BasesFieldGen(bzrc)]
         #self.subfield_generators = []
 
     def vector_at(self, x, y):

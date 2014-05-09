@@ -6,6 +6,7 @@ import time
 
 from masterfieldgen import MasterFieldGen
 from bzrc import BZRC, Command
+from vec2d import Vec2d
 
 
 class Agent(object):
@@ -37,14 +38,23 @@ class Agent(object):
 
         for tank in self.bzrc.get_mytanks():
             self.direct_tank(tank)
+            # if time_diff % 2 < 1:
+            #     self.commands.append(Command(tank.index, shoot=True))
 
         self.bzrc.do_commands(self.commands)
 
     def direct_tank(self, tank):
-        # get vector(s) for the potential fields around the tank
+        # get vector(s) for the potential fields around the tank (this is the vector I want the tank to have)
         field_vector = self.get_field_vector(tank)
-        self.move_to_position(tank, field_vector[0], field_vector[1])
-        self.commands.append(Command(tank.index, speed=field_vector.get_length()))
+
+        # get the tank's current velocity vector
+        tank_vector = Vec2d(tank.vx, tank.vy)
+
+        # get the angle between the desired and current vectors
+        relative_angle = self.normalize_angle(tank_vector.get_angle_between(field_vector))
+
+        # now set the speed and angular velocity
+        self.commands.append(Command(tank.index, speed=field_vector.get_length(), angvel=relative_angle))
 
     def get_field_vector(self, tank):
         return self.master_field_gen.vector_at(tank.x, tank.y)
