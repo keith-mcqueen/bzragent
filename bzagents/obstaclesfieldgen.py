@@ -4,6 +4,7 @@ from vec2d import Vec2d
 from masterfieldgen import FieldGen
 from worldmap import WorldMap
 
+
 class ObstaclesFieldGen(FieldGen):
     def __init__(self, bzrc, default_factor=1):
         super(ObstaclesFieldGen, self).__init__(bzrc)
@@ -18,11 +19,11 @@ class ObstaclesFieldGen(FieldGen):
     def vector_at(self, x, y):
         factor = self.default_factor
         closest_edge = self.world_map.obstacle_edge_at(x, y, self.offset)
-        if closest_edge == None:
-			return Vec2d(0, 0), self.shoot 
-		
+        if closest_edge is None:
+            return Vec2d(0, 0), self.shoot
+
         return closest_edge.perpendicular_normal(), self.shoot
-        
+
 
 class ObstaclesFieldGen2(FieldGen):
     def __init__(self, bzrc, default_factor=1):
