@@ -3,7 +3,7 @@
 import numpy as np
 
 from vec2d import Vec2d
-
+from gridviz import *
 
 class WorldMap(object):
     def __init__(self, bzrc):
@@ -20,17 +20,22 @@ class WorldMap(object):
         self.world_grid[self.world_size - 1] = 1
         self.world_grid[:, self.world_size - 1] = 1
 
+        init_window(self.world_size, self.world_size)
         self.update_grid(bzrc)
-
+        
     def update_grid(self, bzrc):
         for tank in bzrc.get_mytanks():
             grid_position, grid = self.bzrc.get_occgrid(tank.index)
-            offset_row, offset_col = world_to_grid(grid_position[0], grid_position[1])
-            for x in grid:
-                for y in x:
-					row, col = world_to_grid(x,y)
-					self.world_grid[row + offset_row, col + offset_col] = x[y]
-
+            offset_row, offset_col = self.world_to_grid(grid_position[0], grid_position[1])
+            for x in range(0,len(grid)):
+                for y in range(0,len(grid[x])):
+					row, col = self.world_to_grid(x,y)
+					self.world_grid[row , col] = grid[x][y]
+                print "Hello!"
+                print "Hi!"    
+            update_grid(self.world_grid)
+            draw_grid()
+            
     def get_edge_from_grid(self, x, y, eff_dist):
         # get a subgrid of the world centered at (x, y) with (max) width and
         # height of 2*eff_dist (we'll also get the offset of the subgrid within
