@@ -51,7 +51,7 @@ class ObstaclesFieldGen2(FieldGen):
             # if the point lies outside the radius (plus an offset), then skip this obstacle
             distance = radial_vector.get_length()
             threshold = 0.5 * diameter_vector.get_length() + self.offset
-            if distance > threshold:
+            if 0 == distance or distance > threshold:
                 continue
 
             return radial_vector.perpendicular_normal() * factor * self.force * (threshold / distance), self.shoot

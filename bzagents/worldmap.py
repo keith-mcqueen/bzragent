@@ -9,7 +9,7 @@ class WorldMap(object):
     def __init__(self, bzrc):
         self.bzrc = bzrc
         self.obstacle_threshold = 1
-        self.world_size = bzrc.get_constants()['worldsize']
+        self.world_size = int(bzrc.get_constants()['worldsize'])
 
         # create the world grid and fill it with zeroes
         self.world_grid = np.zeros((self.world_size, self.world_size))
@@ -27,7 +27,7 @@ class WorldMap(object):
         for obstacle in bzrc.get_obstacles():
             length = len(obstacle)
             for i in range(0, length):
-                self.edges.append([(obstacle[i % length], obstacle[(i + 1) % length])])
+                self.edges.append((obstacle[i % length], obstacle[(i + 1) % length]))
 
     def init_grid(self, bzrc):
         # init a grid with default values
@@ -68,10 +68,11 @@ class WorldMap(object):
 
             # compute all the locations to visit as we walk around the center
             # of the subgrid looking for an obstacle
-            locations_to_visit = [(int(row), min_row_col) for row in range(min_row_col, max_row_col + 1)]
-            locations_to_visit.extend([(max_row_col, int(col)) for col in range(min_row_col + 1, max_row_col + 1)])
-            locations_to_visit.extend([(int(row), max_row_col) for row in range(max_row_col + 1, min_row_col - 1, -1)])
-            locations_to_visit.extend([(min_row_col, int(col)) for col in range(max_row_col - 1, min_row_col - 1), -1])
+            locations_to_visit = []
+            locations_to_visit.extend([(min_row_col, c) for c in range(min_row_col, max_row_col + 1)])
+            locations_to_visit.extend([(r, max_row_col) for r in range(min_row_col + 1, max_row_col + 1)])
+            locations_to_visit.extend([(max_row_col, c) for c in range(max_row_col - 1, min_row_col - 1, -1)])
+            locations_to_visit.extend([(r, min_row_col) for r in range(max_row_col - 1, min_row_col, -1)])
 
             for (row, col) in locations_to_visit:
                 visited_locations.append((row, col))
@@ -112,47 +113,51 @@ class WorldMap(object):
         if overlap < 0:
             return self.get_subgrid(x, y, size + overlap)
 
+        overlap = max(max(max(row1, col1), row2), col2)
+        if overlap > self.world_size:
+            return self.get_subgrid(x, y, size - (overlap - self.world_size))
+
         return self.world_grid[row1:row2 + 1:, col1:col2 + 1], (row1, col1)
 
     def world_to_grid(self, x, y):
-        return x + (self.world_size / 2), (self.world_size / 2) - y
+        return (self.world_size / 2) - y, x + (self.world_size / 2)
 
     def world_to_grid_safe(self, x, y):
         row, col = self.world_to_grid(x, y)
         return min(max(row, 0), self.world_size), min(max(col, self.world_size))
 
     def grid_to_world(self, row, col):
-        return row - (self.world_size / 2), (self.world_size / 2) - col
+        return (self.world_size / 2) - col, row - (self.world_size / 2)
 
     def obstacle_edge_at(self, x, y, distance):
-        nearest_edge = self.get_edge_from_grid(x, y, distance)
-        if nearest_edge is not None:
-            return nearest_edge
+        return self.get_edge_from_grid(x, y, distance)
+        # if nearest_edge is not None:
+        #     return nearest_edge
 
-        best_distance = distance
-        nearest_edge = None
-
-        # for each obstacle, compute it's effect at the given location
-        for edge in self.edges:
-            # get the distance from (x,y) to the edge
-            current_distance, is_inside_edge = self.retrieve_distance(x, y, edge)
-            if not is_inside_edge:
-                continue
-
-            # if distance > given distance then skip
-            if current_distance > distance:
-                continue
-
-            # if distance > best current distance then skip
-            if current_distance > best_distance:
-                continue
-
-            # update best current distance and save nearest edge
-            best_distance = current_distance
-            nearest_edge = edge
-
-        # return nearest edge
-        return nearest_edge
+        # best_distance = distance
+        # nearest_edge = None
+        #
+        # # for each obstacle, compute it's effect at the given location
+        # for edge in self.edges:
+        #     # get the distance from (x,y) to the edge
+        #     current_distance, is_inside_edge = self.retrieve_distance(x, y, edge)
+        #     if not is_inside_edge:
+        #         continue
+        #
+        #     # if distance > given distance then skip
+        #     if current_distance > distance:
+        #         continue
+        #
+        #     # if distance > best current distance then skip
+        #     if current_distance > best_distance:
+        #         continue
+        #
+        #     # update best current distance and save nearest edge
+        #     best_distance = current_distance
+        #     nearest_edge = edge
+        #
+        # # return nearest edge
+        # return nearest_edge
 
     def retrieve_distance(self, x, y, edge):
         # calculate the vector between the edge endpoints
@@ -169,8 +174,7 @@ class WorldMap(object):
         q = Vec2d(x, y)
         q_dot_n = q.dot(n)
         q_prime = q + (d - q_dot_n) * n
-        is_inside = min(edge[0][0], edge[1][0]) < q_prime[0] < max(edge[0][0], edge[1][0]) and min(edge[0][1],
-                                                                                                   edge[1][1]) < \
-                                                                                               q_prime[1] < max(
-            edge[0][1], edge[1][1])
+        is_inside = min(edge[0][0], edge[1][0]) < q_prime[0] < max(edge[0][0], edge[1][0]) and \
+                    min(edge[0][1], edge[1][1]) < q_prime[1] < max(edge[0][1], edge[1][1])
+
         return q_dot_n - d, is_inside
