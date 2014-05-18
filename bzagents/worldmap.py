@@ -20,37 +20,16 @@ class WorldMap(object):
         self.world_grid[self.world_size - 1] = 1
         self.world_grid[:, self.world_size - 1] = 1
 
-        self.edges = []
+        self.update_grid(bzrc)
 
-        self.init_grid(bzrc)
-
-        for obstacle in bzrc.get_obstacles():
-            length = len(obstacle)
-            for i in range(0, length):
-                self.edges.append((obstacle[i % length], obstacle[(i + 1) % length]))
-
-    def init_grid(self, bzrc):
-        # init a grid with default values
-        #   - the sample code for the visualization says that it expects us to
-        #     use a numpy.array (so we probably should)
-        #   - the grid represents the world, so we can make it 800x800, or we
-        #     can subdivide into "cells" of a certain size
-        #   - provide initial values for the array; couple of choices here:
-        #       - 1: fill the array with zeroes (and we'll update later with
-        #           our initial guess as we wander the field)
-        #           - the pro here is that we can distinguish where we have
-        #             visited and where we have not by having a different value
-        #             than our initial guess
-        #       - 2: fill the grid with our initial guess
-        #           - the pro here is that the grid is fully initialized with
-        #               probabilities, even if they are just our initial guesses
-        world_size = int(bzrc.get_constants()['worldsize'])
-        self.world_grid = np.zeros((world_size, world_size))
-
-        for obstacle in bzrc.get_obstacles():
-            pass
-
-        pass
+    def update_grid(self, bzrc):
+        for tank in bzrc.get_mytanks():
+            grid_position, grid = self.bzrc.get_occgrid(tank.index)
+            offset_row, offset_col = world_to_grid(grid_position[0], grid_position[1])
+            for x in grid:
+                for y in x:
+					row, col = world_to_grid(x,y)
+					self.world_grid[row + offset_row, col + offset_col] = x[y]
 
     def get_edge_from_grid(self, x, y, eff_dist):
         # get a subgrid of the world centered at (x, y) with (max) width and
