@@ -24,8 +24,8 @@ class WorldMap(object):
         # east
         self.world_grid[:, -1] = 1
 
-        gridviz.init_window(self.world_size, self.world_size)
-        self.update_grid(bzrc)
+        #gridviz.init_window(self.world_size, self.world_size)
+        #self.update_grid(bzrc)
 
     def update_grid(self, bzrc):
         for tank in bzrc.get_mytanks():
@@ -38,10 +38,9 @@ class WorldMap(object):
                 for y in range(0, len(grid[x])):
                     row, col = self.world_to_grid(x + grid_position[0], y + grid_position[1])
                     self.world_grid[row, col] = grid[x][y]
-        print str(self.world_grid)
+
         gridviz.update_grid(self.world_grid)
         gridviz.draw_grid()
-        print "Tank"
 
     def get_edge_from_grid(self, x, y, eff_dist):
         # get a subgrid of the world centered at (x, y) with (max) width and
@@ -72,6 +71,7 @@ class WorldMap(object):
 
             for (row, col) in locations_to_visit:
                 visited_locations.append((row, col))
+
                 if subgrid[row, col] >= self.obstacle_threshold:
                     # we've got a hit, now look around this point to see if
                     # there is another point we can use to assume an edge
@@ -88,7 +88,16 @@ class WorldMap(object):
                         (row + 1, col + 1),
                         (row, col + 1)]
                     for (r, c) in surrounding_locations:
-                        if (r, c) not in visited_locations and subgrid[r, c] >= self.obstacle_threshold:
+                        # if we've already visited the current location, then skip it
+                        if (r, c) in visited_locations:
+                            continue
+
+                        # if the row/col is out of bounds, then skip it
+                        if r >= subgrid.shape[0] or c >= subgrid.shape[1]:
+                            continue
+
+                        # check if the value at row/col is an obstacle
+                        if subgrid[r, c] >= self.obstacle_threshold:
                             # it looks like we have an edge, so create the two
                             # endpoints and return them
                             ep1 = self.grid_to_world(row + offset[0], col + offset[1])
@@ -99,25 +108,21 @@ class WorldMap(object):
         return None
 
     def get_subgrid(self, x, y, size):
-        print "X: " + str(x) + " Y: " + str(y) + " Size: " + str(size)
         # get a subview of the world grid centered at (x, y) with width and
         # height of (2*eff_dist)
-        row1, col1 = self.world_to_grid(x - (size - 1), y + (size - 1))
+        row1, col1 = self.world_to_grid(x - size, y + size)
         #row1, col1 = self.world_to_grid(x - size, y + size)
-        row2, col2 = self.world_to_grid(x + size, y - size)
+        row2, col2 = self.world_to_grid(x + (size - 1), y - (size - 1))
 
         # if the subgrid would extend beyond the walls of the world, then
         # shrink the size of the grid by the overlap amount
         overlap = min(min(min(row1, col1), row2), col2)
-        print "Min overlap: " + str(overlap)
-        
-        if overlap < 0:    
+        if overlap < 0:
             return self.get_subgrid(x, y, size + overlap)
 
         overlap = max(max(max(row1, col1), row2), col2)
-        print "Max overlap: " + str(overlap)
-        if overlap > self.world_size:
-            return self.get_subgrid(x, y, size - (overlap - self.world_size))
+        if overlap > self.world_size - 1:
+            return self.get_subgrid(x, y, size - (overlap - (self.world_size - 1)))
 
         return self.world_grid[row1:row2 + 1:, col1:col2 + 1], (row1, col1)
 

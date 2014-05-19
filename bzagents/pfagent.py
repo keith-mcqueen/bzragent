@@ -9,8 +9,7 @@ from basesfieldgen import ReturnToBaseFieldGen
 from flagsfieldgen import FlagsFieldGen
 from flagsfieldgen import RecoverFlagFieldGen
 from enemiesfieldgen import EnemiesFieldGen
-from obstaclesfieldgen import ObstaclesFieldGen2
-from obstaclesfieldgen import *
+from obstaclesfieldgen import ObstaclesFieldGen
 from basesfieldgen import LeaveHomeBaseFieldGen
 from bzrc import BZRC, Command
 from vec2d import Vec2d
@@ -29,28 +28,27 @@ class Agent(object):
         self.shots = []
         self.enemies = []
         self.angle_diffs_by_tank = {}
-        
-        flags_field_gen = FlagsFieldGen(bzrc)
-        enemies_field_gen = EnemiesFieldGen(bzrc)
-        self.obstacles_field_gen = ObstaclesFieldGen(bzrc)
-        obstacles_field_gen2 = ObstaclesFieldGen2(bzrc)
-        leave_home_base_field_gen = LeaveHomeBaseFieldGen(bzrc)
-        return_to_base_field_gen = ReturnToBaseFieldGen(bzrc)
-        recover_flag_field_gen = RecoverFlagFieldGen(bzrc)
-       
-        self.master_field_gen = MasterFieldGen(bzrc, [flags_field_gen,
-                                                      enemies_field_gen,
-                                                      self.obstacles_field_gen,
-                                                      obstacles_field_gen2,
-                                                      leave_home_base_field_gen])
-        self.return_to_base = MasterFieldGen(bzrc, [enemies_field_gen,
-                                                    self.obstacles_field_gen,
-                                                    obstacles_field_gen2,
-                                                    return_to_base_field_gen])
-        self.recover_flag_strategy = MasterFieldGen(bzrc, [recover_flag_field_gen,
-                                                           enemies_field_gen,
-                                                           self.obstacles_field_gen,
-                                                           obstacles_field_gen2])
+
+        flags_field = FlagsFieldGen(bzrc)
+        enemies_field = EnemiesFieldGen(bzrc)
+        obstacles_field = ObstaclesFieldGen(bzrc)
+        leave_home_field = LeaveHomeBaseFieldGen(bzrc)
+        return_home_field = ReturnToBaseFieldGen(bzrc)
+        recover_flag_field = RecoverFlagFieldGen(bzrc)
+
+        self.master_field_gen = MasterFieldGen(bzrc, [flags_field,
+                                                      enemies_field,
+                                                      obstacles_field,
+                                                      #ObstaclesFieldGen2(bzrc),
+                                                      leave_home_field])
+        self.return_to_base = MasterFieldGen(bzrc, [enemies_field,
+                                                    obstacles_field,
+                                                    #ObstaclesFieldGen2(bzrc),
+                                                    return_home_field])
+        self.recover_flag_strategy = MasterFieldGen(bzrc, [recover_flag_field,
+                                                           enemies_field,
+                                                           obstacles_field])
+        #ObstaclesFieldGen2(bzrc)])
         self.last_time_diff = 0
         self.k_p = 0.1
         self.k_d = 0.5
