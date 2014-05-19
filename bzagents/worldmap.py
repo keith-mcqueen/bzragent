@@ -24,8 +24,8 @@ class WorldMap(object):
         # east
         self.world_grid[:, -1] = 1
 
-        #gridviz.init_window(self.world_size, self.world_size)
-        #self.update_grid(bzrc)
+        gridviz.init_window(self.world_size, self.world_size)
+        self.update_grid(bzrc)
 
     def update_grid(self, bzrc):
         for tank in bzrc.get_mytanks():
@@ -38,9 +38,10 @@ class WorldMap(object):
                 for y in range(0, len(grid[x])):
                     row, col = self.world_to_grid(x + grid_position[0], y + grid_position[1])
                     self.world_grid[row, col] = grid[x][y]
-
+        print str(self.world_grid)
         gridviz.update_grid(self.world_grid)
         gridviz.draw_grid()
+        print "Tank"
 
     def get_edge_from_grid(self, x, y, eff_dist):
         # get a subgrid of the world centered at (x, y) with (max) width and
@@ -98,6 +99,7 @@ class WorldMap(object):
         return None
 
     def get_subgrid(self, x, y, size):
+        print "X: " + str(x) + " Y: " + str(y) + " Size: " + str(size)
         # get a subview of the world grid centered at (x, y) with width and
         # height of (2*eff_dist)
         row1, col1 = self.world_to_grid(x - (size - 1), y + (size - 1))
@@ -107,10 +109,13 @@ class WorldMap(object):
         # if the subgrid would extend beyond the walls of the world, then
         # shrink the size of the grid by the overlap amount
         overlap = min(min(min(row1, col1), row2), col2)
-        if overlap < 0:
+        print "Min overlap: " + str(overlap)
+        
+        if overlap < 0:    
             return self.get_subgrid(x, y, size + overlap)
 
         overlap = max(max(max(row1, col1), row2), col2)
+        print "Max overlap: " + str(overlap)
         if overlap > self.world_size:
             return self.get_subgrid(x, y, size - (overlap - self.world_size))
 
