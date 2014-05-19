@@ -18,6 +18,7 @@ from __future__ import division
 #import math
 import sys
 import socket
+import threading
 #import time
 
 
@@ -27,6 +28,8 @@ class BZRC:
     def __init__(self, host, port, debug=False):
         """Given a hostname and port number, connect to the RC tanks."""
         self.debug = debug
+
+        self.lock = threading.Lock()
 
         # Note that AF_INET and SOCK_STREAM are defaults.
         sock = socket.socket()
@@ -325,77 +328,125 @@ class BZRC:
 
     def shoot(self, index):
         """Perform a shoot request."""
-        self.sendline('shoot %s' % index)
-        self.read_ack()
-        return self.read_bool()
+        try:
+            self.lock.acquire()
+            self.sendline('shoot %s' % index)
+            self.read_ack()
+            return self.read_bool()
+        finally:
+            self.lock.release()
 
     def speed(self, index, value):
         """Set the desired speed to the specified value."""
-        self.sendline('speed %s %s' % (index, value))
-        self.read_ack()
-        return self.read_bool()
+        try:
+            self.lock.acquire()
+            self.sendline('speed %s %s' % (index, value))
+            self.read_ack()
+            return self.read_bool()
+        finally:
+            self.lock.release()
 
     def angvel(self, index, value):
         """Set the desired angular velocity to the specified value."""
-        self.sendline('angvel %s %s' % (index, value))
-        self.read_ack()
-        return self.read_bool()
+        try:
+            self.lock.acquire()
+            self.sendline('angvel %s %s' % (index, value))
+            self.read_ack()
+            return self.read_bool()
+        finally:
+            self.lock.release()
 
     # Information Requests:
 
     def get_teams(self):
         """Request a list of teams."""
-        self.sendline('teams')
-        self.read_ack()
-        return self.read_teams()
+        try:
+            self.lock.acquire()
+            self.sendline('teams')
+            self.read_ack()
+            return self.read_teams()
+        finally:
+            self.lock.release()
 
     def get_obstacles(self):
         """Request a list of obstacles."""
-        self.sendline('obstacles')
-        self.read_ack()
-        return self.read_obstacles()
+        try:
+            self.lock.acquire()
+            self.sendline('obstacles')
+            self.read_ack()
+            return self.read_obstacles()
+        finally:
+            self.lock.release()
 
     def get_occgrid(self, tankid):
         """Request an occupancy grid for a tank"""
-        self.sendline('occgrid %d' % tankid)
-        self.read_ack()
-        return self.read_occgrid()
+        try:
+            self.lock.acquire()
+            self.sendline('occgrid %d' % tankid)
+            self.read_ack()
+            return self.read_occgrid()
+        finally:
+            self.lock.release()
 
     def get_flags(self):
         """Request a list of flags."""
-        self.sendline('flags')
-        self.read_ack()
-        return self.read_flags()
+        try:
+            self.lock.acquire()
+            self.sendline('flags')
+            self.read_ack()
+            return self.read_flags()
+        finally:
+            self.lock.release()
 
     def get_shots(self):
         """Request a list of shots."""
-        self.sendline('shots')
-        self.read_ack()
-        return self.read_shots()
+        try:
+            self.lock.acquire()
+            self.sendline('shots')
+            self.read_ack()
+            return self.read_shots()
+        finally:
+            self.lock.release()
 
     def get_mytanks(self):
         """Request a list of our tanks."""
-        self.sendline('mytanks')
-        self.read_ack()
-        return self.read_mytanks()
+        try:
+            self.lock.acquire()
+            self.sendline('mytanks')
+            self.read_ack()
+            return self.read_mytanks()
+        finally:
+            self.lock.release()
 
     def get_othertanks(self):
         """Request a list of tanks that aren't ours."""
-        self.sendline('othertanks')
-        self.read_ack()
-        return self.read_othertanks()
+        try:
+            self.lock.acquire()
+            self.sendline('othertanks')
+            self.read_ack()
+            return self.read_othertanks()
+        finally:
+            self.lock.release()
 
     def get_bases(self):
         """Request a list of bases."""
-        self.sendline('bases')
-        self.read_ack()
-        return self.read_bases()
+        try:
+            self.lock.acquire()
+            self.sendline('bases')
+            self.read_ack()
+            return self.read_bases()
+        finally:
+            self.lock.release()
 
     def get_constants(self):
         """Request a dictionary of game constants."""
-        self.sendline('constants')
-        self.read_ack()
-        return self.read_constants()
+        try:
+            self.lock.acquire()
+            self.sendline('constants')
+            self.read_ack()
+            return self.read_constants()
+        finally:
+            self.lock.release()
 
     # Optimized queries
 
@@ -405,55 +456,63 @@ class BZRC:
         Returns a tuple with the four results.
 
         """
-        self.sendline('mytanks')
-        self.sendline('othertanks')
-        self.sendline('flags')
-        self.sendline('shots')
+        try:
+            self.lock.acquire()
+            self.sendline('mytanks')
+            self.sendline('othertanks')
+            self.sendline('flags')
+            self.sendline('shots')
 
-        self.read_ack()
-        mytanks = self.read_mytanks()
-        self.read_ack()
-        othertanks = self.read_othertanks()
-        self.read_ack()
-        flags = self.read_flags()
-        self.read_ack()
-        shots = self.read_shots()
+            self.read_ack()
+            mytanks = self.read_mytanks()
+            self.read_ack()
+            othertanks = self.read_othertanks()
+            self.read_ack()
+            flags = self.read_flags()
+            self.read_ack()
+            shots = self.read_shots()
 
-        return mytanks, othertanks, flags, shots
+            return mytanks, othertanks, flags, shots
+        finally:
+            self.lock.release()
 
     def do_commands(self, commands):
         """Send commands for a bunch of tanks in a network-optimized way."""
-        for cmd in commands:
-            if cmd.speed is not None:
-                self.sendline('speed %s %s' % (cmd.index, cmd.speed))
-            if cmd.angvel is not None:
-                self.sendline('angvel %s %s' % (cmd.index, cmd.angvel))
-            if cmd.shoot:
-                self.sendline('shoot %s' % cmd.index)
+        try:
+            self.lock.acquire()
+            for cmd in commands:
+                if cmd.speed is not None:
+                    self.sendline('speed %s %s' % (cmd.index, cmd.speed))
+                if cmd.angvel is not None:
+                    self.sendline('angvel %s %s' % (cmd.index, cmd.angvel))
+                if cmd.shoot:
+                    self.sendline('shoot %s' % cmd.index)
 
-        results = []
-        for cmd in commands:
-            if cmd.speed is not None:
-                self.read_ack()
-                result_speed = self.read_bool()
-            else:
-                result_speed = None
+            results = []
+            for cmd in commands:
+                if cmd.speed is not None:
+                    self.read_ack()
+                    result_speed = self.read_bool()
+                else:
+                    result_speed = None
 
-            if cmd.angvel is not None:
-                self.read_ack()
-                result_angvel = self.read_bool()
-            else:
-                result_angvel = None
+                if cmd.angvel is not None:
+                    self.read_ack()
+                    result_angvel = self.read_bool()
+                else:
+                    result_angvel = None
 
-            if cmd.shoot:
-                self.read_ack()
-                result_shoot = self.read_bool()
-            else:
-                result_shoot = False
+                if cmd.shoot:
+                    self.read_ack()
+                    result_shoot = self.read_bool()
+                else:
+                    result_shoot = False
 
-            results.append((result_speed, result_angvel, result_shoot))
+                results.append((result_speed, result_angvel, result_shoot))
 
-        return results
+            return results
+        finally:
+            self.lock.release()
 
 
 class Answer(object):

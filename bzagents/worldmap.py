@@ -1,8 +1,28 @@
 #!/usr/bin/python -tt
 
 import numpy as np
+import threading
 
 import gridviz
+
+
+def set_interval(interval):
+    def decorator(function):
+        def wrapper(*args, **kwargs):
+            stopped = threading.Event()
+
+            def loop():  # executed in another thread
+                while not stopped.wait(interval):  # until stopped
+                    function(*args, **kwargs)
+
+            t = threading.Thread(target=loop)
+            t.daemon = True  # stop if the program exits
+            t.start()
+            return stopped
+
+        return wrapper
+
+    return decorator
 
 
 class WorldMap(object):
@@ -24,25 +44,41 @@ class WorldMap(object):
         # east
         self.world_grid[:, -1] = 1
 
-        #gridviz.init_window(self.world_size, self.world_size)
-        #self.update_grid(bzrc)
+        gridviz.init_window(self.world_size, self.world_size)
+        self.update_grid(bzrc)
 
+    @set_interval(1.0)
     def update_grid(self, bzrc):
         for tank in bzrc.get_mytanks():
             # if tank is not alive, skip it
-            if tank.status is not 'alive':
+            if tank.status != 'alive':
                 continue
 
-            grid_position, grid = self.bzrc.get_occgrid(tank.index)
-            for x in range(0, len(grid)):
-                for y in range(0, len(grid[x])):
-                    row, col = self.world_to_grid(x + grid_position[0], y + grid_position[1])
-                    self.world_grid[row, col] = grid[x][y]
+            print "getting occ-grid for tank %s" % tank.index
+            occ_grid_loc, occ_grid = self.bzrc.get_occgrid(tank.index)
+            row_offset, col_offset = self.world_to_grid(occ_grid_loc[0], occ_grid_loc[1])
+
+            print "occ_grid_loc: (%s, %s)" % (occ_grid_loc[0], occ_grid_loc[1])
+            for x in range(0, len(occ_grid)):
+                print occ_grid[x]
+                row = x + row_offset
+
+                self.world_grid[row:row + 1, col_offset:col_offset + len(occ_grid[x])] = occ_grid[x]
+                # for y in range(0, len(occ_grid[x])):
+                #     row, col = self.world_to_grid(x + occ_grid_loc[0], y + occ_grid_loc[1])
+                #     print "updating world_grid cell (row = %s, col = %s) to value %s" % (row, col, occ_grid[x][y])
+                #     print "before: %s" % (self.world_grid[row, col])
+                #     self.world_grid[row, col] = occ_grid[x][y]
+                #     print "after: %s" % (self.world_grid[row, col])
 
         gridviz.update_grid(self.world_grid)
         gridviz.draw_grid()
 
     def get_edge_from_grid(self, x, y, eff_dist):
+        # if the (x, y) is out of bounds, then just return nothing
+        if abs(x) > self.world_size / 2 or abs(y) > self.world_size / 2:
+            return None
+
         # get a subgrid of the world centered at (x, y) with (max) width and
         # height of 2*eff_dist (we'll also get the offset of the subgrid within
         # the world grid, to help us translate locations)
@@ -138,4 +174,3 @@ class WorldMap(object):
 
     def obstacle_edge_at(self, x, y, distance):
         return self.get_edge_from_grid(x, y, distance)
-

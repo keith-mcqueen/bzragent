@@ -65,8 +65,8 @@ class Agent(object):
         self.last_time_diff = time_diff
 
         for tank in self.bzrc.get_mytanks():
-            #if tank.status.startswith('alive'):  # and tank.index == 0:
-            self.direct_tank(tank, d_t)
+            if tank.status.startswith('alive'):  # and tank.index == 0:
+                self.direct_tank(tank, d_t)
 
         self.bzrc.do_commands(self.commands)
 
