@@ -9,7 +9,7 @@ class ObstaclesFieldGen(FieldGen):
     def __init__(self, bzrc, default_factor=1):
         super(ObstaclesFieldGen, self).__init__(bzrc)
 
-        self.offset = 200
+        self.offset = 40
         self.force = 1
         self.default_factor = default_factor
         self.obstacles = self.bzrc.get_obstacles()
@@ -21,12 +21,20 @@ class ObstaclesFieldGen(FieldGen):
         closest_edge = self.world_map.obstacle_edge_at(x, y, self.offset)
         if closest_edge is None:
             return Vec2d(0, 0), self.shoot
-            
+
+        # position vector
+        vector_s = Vec2d(x, y)
+
+        # vector for endpoint 1
         vector_a = Vec2d(closest_edge[0])
+
+        # vector for endpoint 2
         vector_c = Vec2d(closest_edge[1])
-        diameter_vector = vector_c - vector_a
-        
-        return diameter_vector.perpendicular_normal(), self.shoot
+
+        # final vector is the sum of vector from C to S and from A to S
+        final_vector = (vector_c - vector_s) + (vector_a - vector_s)
+
+        return final_vector.normalized() * self.force * factor, self.shoot
 
 
 class ObstaclesFieldGen2(FieldGen):

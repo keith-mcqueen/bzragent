@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from vec2d import Vec2d
-from gridviz import *
+import gridviz
+
 
 class WorldMap(object):
     def __init__(self, bzrc):
@@ -15,27 +15,33 @@ class WorldMap(object):
         self.world_grid = np.zeros((self.world_size, self.world_size))
 
         # make the perimeter (the outside walls) of the world an obstacle
+        # north
         self.world_grid[0] = 1
+        # south
+        self.world_grid[-1] = 1
+        # west
         self.world_grid[:, 0] = 1
-        self.world_grid[self.world_size - 1] = 1
-        self.world_grid[:, self.world_size - 1] = 1
+        # east
+        self.world_grid[:, -1] = 1
 
-        init_window(self.world_size, self.world_size)
-        self.update_grid(bzrc)
-        
+        #gridviz.init_window(self.world_size, self.world_size)
+        #self.update_grid(bzrc)
+
     def update_grid(self, bzrc):
         for tank in bzrc.get_mytanks():
+            # if tank is not alive, skip it
+            if tank.status is not 'alive':
+                continue
+
             grid_position, grid = self.bzrc.get_occgrid(tank.index)
-            offset_row, offset_col = self.world_to_grid(grid_position[0], grid_position[1])
-            for x in range(0,len(grid)):
-                for y in range(0,len(grid[x])):
-					row, col = self.world_to_grid(x,y)
-					self.world_grid[row , col] = grid[x][y]
-                print "Hello!"
-                print "Hi!"    
-            update_grid(self.world_grid)
-            draw_grid()
-            
+            for x in range(0, len(grid)):
+                for y in range(0, len(grid[x])):
+                    row, col = self.world_to_grid(x + grid_position[0], y + grid_position[1])
+                    self.world_grid[row, col] = grid[x][y]
+
+        gridviz.update_grid(self.world_grid)
+        gridviz.draw_grid()
+
     def get_edge_from_grid(self, x, y, eff_dist):
         # get a subgrid of the world centered at (x, y) with (max) width and
         # height of 2*eff_dist (we'll also get the offset of the subgrid within
@@ -53,10 +59,15 @@ class WorldMap(object):
             # compute all the locations to visit as we walk around the center
             # of the subgrid looking for an obstacle
             locations_to_visit = []
-            locations_to_visit.extend([(min_row_col, c) for c in range(min_row_col, max_row_col + 1)])
-            locations_to_visit.extend([(r, max_row_col) for r in range(min_row_col + 1, max_row_col + 1)])
-            locations_to_visit.extend([(max_row_col, c) for c in range(max_row_col - 1, min_row_col - 1, -1)])
-            locations_to_visit.extend([(r, min_row_col) for r in range(max_row_col - 1, min_row_col, -1)])
+            north = [(min_row_col, c) for c in range(min_row_col, max_row_col + 1)]
+            east = [(r, max_row_col) for r in range(min_row_col + 1, max_row_col + 1)]
+            south = [(max_row_col, c) for c in range(max_row_col - 1, min_row_col - 1, -1)]
+            west = [(r, min_row_col) for r in range(max_row_col - 1, min_row_col, -1)]
+
+            locations_to_visit.extend(north)
+            locations_to_visit.extend(east)
+            locations_to_visit.extend(south)
+            locations_to_visit.extend(west)
 
             for (row, col) in locations_to_visit:
                 visited_locations.append((row, col))
@@ -65,15 +76,16 @@ class WorldMap(object):
                     # there is another point we can use to assume an edge
 
                     # create the locations for the surrounding points
+                    # (the order we visit may be important)
                     surrounding_locations = [
-                        (row - 1, col - 1),
-                        (row - 1, col),
                         (row - 1, col + 1),
+                        (row - 1, col),
+                        (row - 1, col - 1),
                         (row, col - 1),
-                        (row, col + 1),
                         (row + 1, col - 1),
                         (row + 1, col),
-                        (row + 1, col + 1)]
+                        (row + 1, col + 1),
+                        (row, col + 1)]
                     for (r, c) in surrounding_locations:
                         if (r, c) not in visited_locations and subgrid[r, c] >= self.obstacle_threshold:
                             # it looks like we have an edge, so create the two
@@ -88,7 +100,8 @@ class WorldMap(object):
     def get_subgrid(self, x, y, size):
         # get a subview of the world grid centered at (x, y) with width and
         # height of (2*eff_dist)
-        row1, col1 = self.world_to_grid(x - size, y + size)
+        row1, col1 = self.world_to_grid(x - (size - 1), y + (size - 1))
+        #row1, col1 = self.world_to_grid(x - size, y + size)
         row2, col2 = self.world_to_grid(x + size, y - size)
 
         # if the subgrid would extend beyond the walls of the world, then
@@ -115,50 +128,4 @@ class WorldMap(object):
 
     def obstacle_edge_at(self, x, y, distance):
         return self.get_edge_from_grid(x, y, distance)
-        # if nearest_edge is not None:
-        #     return nearest_edge
 
-        # best_distance = distance
-        # nearest_edge = None
-        #
-        # # for each obstacle, compute it's effect at the given location
-        # for edge in self.edges:
-        #     # get the distance from (x,y) to the edge
-        #     current_distance, is_inside_edge = self.retrieve_distance(x, y, edge)
-        #     if not is_inside_edge:
-        #         continue
-        #
-        #     # if distance > given distance then skip
-        #     if current_distance > distance:
-        #         continue
-        #
-        #     # if distance > best current distance then skip
-        #     if current_distance > best_distance:
-        #         continue
-        #
-        #     # update best current distance and save nearest edge
-        #     best_distance = current_distance
-        #     nearest_edge = edge
-        #
-        # # return nearest edge
-        # return nearest_edge
-
-    def retrieve_distance(self, x, y, edge):
-        # calculate the vector between the edge endpoints
-        edge_vector = Vec2d(edge[0][0] - edge[1][0], edge[0][1] - edge[1][1])
-
-        # calculate the normal vector to the edge
-        n = edge_vector.perpendicular_normal()
-
-        # calculate the edge's distance from origin
-        p1 = Vec2d(edge[0][0], edge[0][1])
-        d = p1.dot(n)
-
-        # calculate the distance from the point to the edge
-        q = Vec2d(x, y)
-        q_dot_n = q.dot(n)
-        q_prime = q + (d - q_dot_n) * n
-        is_inside = min(edge[0][0], edge[1][0]) < q_prime[0] < max(edge[0][0], edge[1][0]) and \
-                    min(edge[0][1], edge[1][1]) < q_prime[1] < max(edge[0][1], edge[1][1])
-
-        return q_dot_n - d, is_inside
