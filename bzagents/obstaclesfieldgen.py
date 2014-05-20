@@ -39,7 +39,7 @@ class ObstaclesFieldGen(FieldGen):
         vector_c = Vec2d(closest_edge[1])
 
         # final vector is the sum of vector from C to S and from A to S
-        final_vector = (vector_c - vector_s) + (vector_a - vector_s)
+        final_vector = (vector_s - vector_c) + (vector_s - vector_a)
 
         return final_vector.normalized() * self.force * factor, self.shoot
 
