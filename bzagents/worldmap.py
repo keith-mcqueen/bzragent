@@ -186,3 +186,7 @@ class WorldMap(object):
             return ((1 - self.true_positive) * previous / ((1 - self.true_positive) * previous + self.true_negative * (1 - previous)))
         else :
             return previous
+            
+    def is_unexplored(self, x, y):
+        value = self.world_grid[x, y]
+        return value > .0000002 and value < .8
