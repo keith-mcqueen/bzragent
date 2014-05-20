@@ -4,23 +4,26 @@ import time
 
 from vec2d import Vec2d
 from masterfieldgen import FieldGen
-from worldmap import WorldMap
 
 
 class ObstaclesFieldGen(FieldGen):
-    def __init__(self, bzrc, default_factor=1):
+    def __init__(self, bzrc, world_map, default_factor=1):
         super(ObstaclesFieldGen, self).__init__(bzrc)
 
         self.offset = 40
         self.force = 1
         self.default_factor = default_factor
-        #self.obstacles = self.bzrc.get_obstacles()
         self.shoot = False
-        self.world_map = WorldMap(self.bzrc)
+        self.world_map = world_map
         self.init_time = time.time()
 
     def vector_at(self, x, y):
         factor = self.default_factor
+
+        if (self.world_map.world_size / 2) - abs(x) < self.offset:
+            return Vec2d(-x, 0).normalized() * self.force * factor, self.shoot
+        if (self.world_map.world_size / 2) - abs(y) < self.offset:
+            return Vec2d(0, -y).normalized() * self.force * factor, self.shoot
 
         if (time.time() - self.init_time) % 1 < 1:
             self.world_map.update_grid(self.bzrc)

@@ -1,28 +1,8 @@
 #!/usr/bin/python -tt
 
 import numpy as np
-import threading
 
 import gridviz
-
-
-def set_interval(interval):
-    def decorator(function):
-        def wrapper(*args, **kwargs):
-            stopped = threading.Event()
-
-            def loop():  # executed in another thread
-                while not stopped.wait(interval):  # until stopped
-                    function(*args, **kwargs)
-
-            t = threading.Thread(target=loop)
-            t.daemon = True  # stop if the program exits
-            t.start()
-            return stopped
-
-        return wrapper
-
-    return decorator
 
 
 class WorldMap(object):
@@ -42,16 +22,6 @@ class WorldMap(object):
         for i in range(self.world_size):
             self.world_grid[i] = self.default_probability
             self.world_grid[:, i] = self.default_probability
-
-        # make the perimeter (the outside walls) of the world an obstacle
-        # north
-        #self.world_grid[0] = 1
-        # south
-        #self.world_grid[-1] = 1
-        # west
-        #self.world_grid[:, 0] = 1
-        # east
-        #self.world_grid[:, -1] = 1
 
         gridviz.init_window(self.world_size, self.world_size)
         self.update_grid(bzrc)
@@ -181,12 +151,11 @@ class WorldMap(object):
 
     def update_probability(self, observed, previous):
         if observed == 1:
-            return (self.true_positive * previous / (self.true_positive * previous + (1 - self.true_negative) * (1 - previous)))
-        elif observed == 0:
-            return ((1 - self.true_positive) * previous / ((1 - self.true_positive) * previous + self.true_negative * (1 - previous)))
-        else :
-            return previous
-            
-    def is_unexplored(self, x, y):
-        value = self.world_grid[x, y]
-        return value > .0000002 and value < .8
+            return self.true_positive * previous / (
+                self.true_positive * previous + (1 - self.true_negative) * (1 - previous))
+
+        if observed == 0:
+            return (1 - self.true_positive) * previous / (
+                (1 - self.true_positive) * previous + self.true_negative * (1 - previous))
+
+        return previous

@@ -11,6 +11,8 @@ from flagsfieldgen import RecoverFlagFieldGen
 from enemiesfieldgen import EnemiesFieldGen
 from obstaclesfieldgen import ObstaclesFieldGen
 from basesfieldgen import LeaveHomeBaseFieldGen
+from worldmap import WorldMap
+from explorefieldgen import ExploreFieldGen
 from bzrc import BZRC, Command
 from vec2d import Vec2d
 
@@ -29,26 +31,29 @@ class Agent(object):
         self.enemies = []
         self.angle_diffs_by_tank = {}
 
+        self.world_map = WorldMap(bzrc)
+
         flags_field = FlagsFieldGen(bzrc)
         enemies_field = EnemiesFieldGen(bzrc)
-        obstacles_field = ObstaclesFieldGen(bzrc)
+        obstacles_field = ObstaclesFieldGen(bzrc, self.world_map)
         leave_home_field = LeaveHomeBaseFieldGen(bzrc)
         return_home_field = ReturnToBaseFieldGen(bzrc)
         recover_flag_field = RecoverFlagFieldGen(bzrc)
+        explore_field = ExploreFieldGen(bzrc, self.world_map)
 
         self.master_field_gen = MasterFieldGen(bzrc, [flags_field,
                                                       enemies_field,
                                                       obstacles_field,
-                                                      #ObstaclesFieldGen2(bzrc),
                                                       leave_home_field])
         self.return_to_base = MasterFieldGen(bzrc, [enemies_field,
                                                     obstacles_field,
-                                                    #ObstaclesFieldGen2(bzrc),
                                                     return_home_field])
         self.recover_flag_strategy = MasterFieldGen(bzrc, [recover_flag_field,
                                                            enemies_field,
                                                            obstacles_field])
-        #ObstaclesFieldGen2(bzrc)])
+        self.explore_world_strategy = MasterFieldGen(bzrc, [explore_field,
+                                                            enemies_field,
+                                                            obstacles_field])
         self.last_time_diff = 0
         self.k_p = 0.1
         self.k_d = 0.5
@@ -92,12 +97,13 @@ class Agent(object):
         self.commands.append(Command(tank.index, field_vector.get_length(), angvel, shoot))
 
     def get_field_vector(self, tank):
-        if tank.flag == '-':
-            if tank.index % 2 == 0:
-                return self.master_field_gen.vector_at(tank.x, tank.y)
-            return self.recover_flag_strategy.vector_at(tank.x, tank.y)
-
-        return self.return_to_base.vector_at(tank.x, tank.y)
+        # if tank.flag == '-':
+        #     if tank.index % 2 == 0:
+        #         return self.master_field_gen.vector_at(tank.x, tank.y)
+        #     return self.recover_flag_strategy.vector_at(tank.x, tank.y)
+        #
+        # return self.return_to_base.vector_at(tank.x, tank.y)
+        return self.explore_world_strategy.vector_at(tank.x, tank.vy)
 
     @staticmethod
     def normalize_angle(angle):
