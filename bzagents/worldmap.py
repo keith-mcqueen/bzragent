@@ -56,6 +56,7 @@ class WorldMap(object):
 
             #print "getting occ-grid for tank %s" % tank.index
             occ_grid_loc, occ_grid = self.bzrc.get_occgrid(tank.index)
+
             row_offset, col_offset = self.world_to_grid(occ_grid_loc[0], occ_grid_loc[1])
 
             #print "occ_grid_loc: (%s, %s)" % (occ_grid_loc[0], occ_grid_loc[1])
@@ -63,23 +64,24 @@ class WorldMap(object):
                 values = occ_grid[x]
 
                 #print values
-                row1 = x + row_offset
-                row2 = row1 + 1
-
-                col1 = col_offset
-                col2 = col_offset + len(values)
+                # row1 = x + row_offset
+                # row2 = row1 + 1
+                #
+                # col1 = col_offset
+                # col2 = col_offset + len(values)
 
                 #print "updating values from [row = %s, col = %s] to [row = %s, col = %s]" % (row1, col1, row2, col2)
 
-                self.world_grid[row1:row2:, col1:col2:] = values
+                #self.world_grid[row1:row2:, col1:col2:] = values
 
                 #print "updated values in world_grid"
-                # for y in range(0, len(occ_grid[x])):
-                #     row, col = self.world_to_grid(x + occ_grid_loc[0], y + occ_grid_loc[1])
-                #     print "updating world_grid cell (row = %s, col = %s) to value %s" % (row, col, occ_grid[x][y])
-                #     print "before: %s" % (self.world_grid[row, col])
-                #     self.world_grid[row, col] = occ_grid[x][y]
-                #     print "after: %s" % (self.world_grid[row, col])
+
+                for y in range(0, len(values)):
+                    row, col = self.world_to_grid(x + occ_grid_loc[0], y + occ_grid_loc[1])
+                    print "updating world_grid cell (row = %s, col = %s) to value %s" % (row, col, occ_grid[x][y])
+                    print "before: %s" % (self.world_grid[row, col])
+                    self.world_grid[row, col] = occ_grid[x][y]
+                    print "after: %s" % (self.world_grid[row, col])
 
         gridviz.update_grid(self.world_grid)
         gridviz.draw_grid()
