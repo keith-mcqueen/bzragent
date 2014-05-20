@@ -47,23 +47,33 @@ class WorldMap(object):
         gridviz.init_window(self.world_size, self.world_size)
         self.update_grid(bzrc)
 
-    @set_interval(1.0)
+    #@set_interval(1.0)
     def update_grid(self, bzrc):
         for tank in bzrc.get_mytanks():
             # if tank is not alive, skip it
             if tank.status != 'alive':
                 continue
 
-            print "getting occ-grid for tank %s" % tank.index
+            #print "getting occ-grid for tank %s" % tank.index
             occ_grid_loc, occ_grid = self.bzrc.get_occgrid(tank.index)
             row_offset, col_offset = self.world_to_grid(occ_grid_loc[0], occ_grid_loc[1])
 
-            print "occ_grid_loc: (%s, %s)" % (occ_grid_loc[0], occ_grid_loc[1])
+            #print "occ_grid_loc: (%s, %s)" % (occ_grid_loc[0], occ_grid_loc[1])
             for x in range(0, len(occ_grid)):
-                print occ_grid[x]
-                row = x + row_offset
+                values = occ_grid[x]
 
-                self.world_grid[row:row + 1, col_offset:col_offset + len(occ_grid[x])] = occ_grid[x]
+                #print values
+                row1 = x + row_offset
+                row2 = row1 + 1
+
+                col1 = col_offset
+                col2 = col_offset + len(values)
+
+                #print "updating values from [row = %s, col = %s] to [row = %s, col = %s]" % (row1, col1, row2, col2)
+
+                self.world_grid[row1:row2:, col1:col2:] = values
+
+                #print "updated values in world_grid"
                 # for y in range(0, len(occ_grid[x])):
                 #     row, col = self.world_to_grid(x + occ_grid_loc[0], y + occ_grid_loc[1])
                 #     print "updating world_grid cell (row = %s, col = %s) to value %s" % (row, col, occ_grid[x][y])

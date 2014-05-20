@@ -1,5 +1,7 @@
 #!/usr/bin/python -tt
 
+import time
+
 from vec2d import Vec2d
 from masterfieldgen import FieldGen
 from worldmap import WorldMap
@@ -15,9 +17,14 @@ class ObstaclesFieldGen(FieldGen):
         self.obstacles = self.bzrc.get_obstacles()
         self.shoot = False
         self.world_map = WorldMap(self.bzrc)
+        self.init_time = time.time()
 
     def vector_at(self, x, y):
         factor = self.default_factor
+
+        if (time.time() - self.init_time) % 1 < 1:
+            self.world_map.update_grid(self.bzrc)
+
         closest_edge = self.world_map.obstacle_edge_at(x, y, self.offset)
         if closest_edge is None:
             return Vec2d(0, 0), self.shoot
