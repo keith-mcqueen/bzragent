@@ -11,8 +11,8 @@ class ExploreFieldGen(FieldGen):
 
         self.default_shoot = False
         self.range = 50
-        self.low_prob = 0.0005
-        self.high_prob = 0.01
+        self.low_prob = 0
+        self.high_prob = 0
         self.default_factor = default_factor
         self.callsign = bzrc.get_mytanks()[0].callsign
         self.world_map = world_map

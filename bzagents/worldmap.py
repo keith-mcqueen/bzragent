@@ -3,25 +3,29 @@
 import numpy as np
 
 import gridviz
+from bzrc import UnexpectedResponse
 
 
 class WorldMap(object):
     def __init__(self, bzrc):
         self.bzrc = bzrc
-        self.obstacle_threshold = 1
+        self.obstacle_threshold = 0.95
         constants = bzrc.get_constants()
         self.world_size = int(constants['worldsize'])
+
         self.true_positive = float(constants['truepositive'])
         self.true_negative = float(constants['truenegative'])
+        self.false_positive = 1 - self.true_positive
+        self.false_negative = 1 - self.true_negative
 
         self.default_probability = 0.005
 
         # create the world grid and fill it with zeroes
         self.world_grid = np.zeros((self.world_size, self.world_size))
 
-        for i in range(self.world_size):
-            self.world_grid[i] = self.default_probability
-            self.world_grid[:, i] = self.default_probability
+        # for i in range(self.world_size):
+        #     self.world_grid[i] = self.default_probability
+        #     self.world_grid[:, i] = self.default_probability
 
         gridviz.init_window(self.world_size, self.world_size)
         self.update_grid(bzrc)
@@ -33,8 +37,10 @@ class WorldMap(object):
             if tank.status != 'alive':
                 continue
 
-            #print "getting occ-grid for tank %s" % tank.index
-            occ_grid_loc, occ_grid = self.bzrc.get_occgrid(tank.index)
+            try:
+                occ_grid_loc, occ_grid = self.bzrc.get_occgrid(tank.index)
+            except UnexpectedResponse:
+                continue
 
             for x in range(0, len(occ_grid)):
                 values = occ_grid[x]
@@ -47,6 +53,44 @@ class WorldMap(object):
 
         gridviz.update_grid(self.world_grid)
         gridviz.draw_grid()
+
+    def find_point(self, x, y, size, min_val, max_val):
+        # if the (x, y) is out of bounds, then just return nothing
+        if abs(x) > self.world_size / 2 or abs(y) > self.world_size / 2:
+            return None
+
+        # get a subgrid of the world centered at (x, y) with (max) width and
+        # height of 2*eff_dist (we'll also get the offset of the subgrid within
+        # the world grid, to help us translate locations)
+        subgrid, offset = self.get_subgrid(x, y, size)
+
+        iterations = subgrid.shape[1] / 2
+        for i in range(1, iterations + 1):
+            # compute the min/max row/col (the corners) of the square that we
+            # will walk around
+            min_row_col = iterations - i
+            max_row_col = iterations + i - 1
+
+            # compute all the locations to visit as we walk around the center
+            # of the subgrid looking for an obstacle
+            locations_to_visit = []
+            north = [(min_row_col, c) for c in range(min_row_col, max_row_col + 1)]
+            east = [(r, max_row_col) for r in range(min_row_col + 1, max_row_col + 1)]
+            south = [(max_row_col, c) for c in range(max_row_col - 1, min_row_col - 1, -1)]
+            west = [(r, min_row_col) for r in range(max_row_col - 1, min_row_col, -1)]
+
+            locations_to_visit.extend(north)
+            locations_to_visit.extend(east)
+            locations_to_visit.extend(south)
+            locations_to_visit.extend(west)
+
+            for (row, col) in locations_to_visit:
+                if min_val <= subgrid[row, col] <= max_val:
+                    # we've got a hit, now look around this point to see if
+                    # there is another point we can use to assume an edge
+                    return self.grid_to_world(row + offset[0], col + offset[1])
+
+        return None
 
     def get_edge_from_grid(self, x, y, eff_dist):
         # if the (x, y) is out of bounds, then just return nothing
@@ -150,12 +194,19 @@ class WorldMap(object):
         return self.get_edge_from_grid(x, y, distance)
 
     def update_probability(self, observed, previous):
+        if previous == 0:
+            previous = self.default_probability
+
         if observed == 1:
             return self.true_positive * previous / (
-                self.true_positive * previous + (1 - self.true_negative) * (1 - previous))
+                self.true_positive * previous + self.false_negative * (1 - previous))
 
         if observed == 0:
-            return (1 - self.true_positive) * previous / (
-                (1 - self.true_positive) * previous + self.true_negative * (1 - previous))
+            return self.false_positive * previous / (
+                self.false_positive * previous + self.true_negative * (1 - previous))
 
         return previous
+
+    def is_unexplored(self, x, y):
+        value = self.world_grid[x, y]
+        return .0000002 < value < .8
