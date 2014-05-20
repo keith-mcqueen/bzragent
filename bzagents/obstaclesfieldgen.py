@@ -14,7 +14,7 @@ class ObstaclesFieldGen(FieldGen):
         self.offset = 40
         self.force = 1
         self.default_factor = default_factor
-        self.obstacles = self.bzrc.get_obstacles()
+        #self.obstacles = self.bzrc.get_obstacles()
         self.shoot = False
         self.world_map = WorldMap(self.bzrc)
         self.init_time = time.time()

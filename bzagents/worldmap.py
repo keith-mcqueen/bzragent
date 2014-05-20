@@ -29,10 +29,17 @@ class WorldMap(object):
     def __init__(self, bzrc):
         self.bzrc = bzrc
         self.obstacle_threshold = 1
-        self.world_size = int(bzrc.get_constants()['worldsize'])
+        constants = bzrc.get_constants()
+        self.world_size = int(constants['worldsize'])
+        self.true_positive = float(constants['truepositive'])
+        self.true_negative = float(constants['truenegative'])
 
         # create the world grid and fill it with zeroes
         self.world_grid = np.zeros((self.world_size, self.world_size))
+
+        for i in range(800):
+            self.world_grid[i] = 0.005
+            self.world_grid[:, i] = 0.005
 
         # make the perimeter (the outside walls) of the world an obstacle
         # north
@@ -78,10 +85,12 @@ class WorldMap(object):
 
                 for y in range(0, len(values)):
                     row, col = self.world_to_grid(x + occ_grid_loc[0], y + occ_grid_loc[1])
-                    print "updating world_grid cell (row = %s, col = %s) to value %s" % (row, col, occ_grid[x][y])
-                    print "before: %s" % (self.world_grid[row, col])
-                    self.world_grid[row, col] = occ_grid[x][y]
-                    print "after: %s" % (self.world_grid[row, col])
+                    if (row >= 800 or col >= 800):
+                        break
+                    #print "updating world_grid cell (row = %s, col = %s) to value %s" % (row, col, occ_grid[x][y])
+                    #print "before: %s" % (self.world_grid[row, col])
+                    self.world_grid[row, col] = self.update_probability(occ_grid[x][y], self.world_grid[row, col])
+                    #print "after: %s" % (self.world_grid[row, col])
 
         gridviz.update_grid(self.world_grid)
         gridviz.draw_grid()
@@ -186,3 +195,11 @@ class WorldMap(object):
 
     def obstacle_edge_at(self, x, y, distance):
         return self.get_edge_from_grid(x, y, distance)
+
+    def update_probability(self, observed, previous):
+        if observed == 1:
+            return (self.true_positive * previous / (self.true_positive * previous + (1 - self.true_negative) * (1 - previous)))
+        elif observed == 0:
+            return ((1 - self.true_positive) * previous / ((1 - self.true_positive) * previous + self.true_negative * (1 - previous)))
+        else :
+            return previous
