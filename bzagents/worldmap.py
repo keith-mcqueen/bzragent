@@ -49,7 +49,17 @@ class WorldMap(object):
                     row, col = self.world_to_grid(x + occ_grid_loc[0], y + occ_grid_loc[1])
                     if row >= self.world_size or col >= self.world_size:
                         break
-                    self.world_grid[row, col] = self.update_probability(occ_grid[x][y], self.world_grid[row, col])
+
+                    observed = occ_grid[x][y]
+                    stored = self.world_grid[row, col]
+                    probability = self.update_probability(observed, stored)
+
+                    #if row in [200, 400, 600] and col in [200, 400, 600]:
+                    # if row in [250] and col in [500]:
+                    #     print "occupied probabilities at [row=%s, col=%s]:" % (row, col)
+                    #     print "stored: %s    observed: %s    computed: %s" % (stored, observed, probability)
+
+                    self.world_grid[row, col] = probability
 
         gridviz.update_grid(self.world_grid)
         gridviz.draw_grid()
@@ -196,6 +206,9 @@ class WorldMap(object):
     def update_probability(self, observed, previous):
         if previous == 0:
             previous = self.default_probability
+
+        if previous <= 0.0000001 or previous >= 0.97:
+            return previous
 
         if observed == 1:
             return self.true_positive * previous / (

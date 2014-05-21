@@ -20,8 +20,7 @@ class ExploreFieldGen(FieldGen):
         self.return_to_base_field = ReturnToBaseFieldGen(bzrc)
 
     def vector_at(self, x, y):
-        unexplored = self.world_map.find_point(x, y, self.range, self.world_map.default_probability,
-                                               self.world_map.default_probability)
+        unexplored = self.world_map.find_point(x, y, self.range, 0, 0)
         if unexplored is None:
             return self.return_to_base_field.vector_at(x, y)
 
