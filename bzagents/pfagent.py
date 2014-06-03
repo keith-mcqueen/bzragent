@@ -1,20 +1,15 @@
-#!/usr/bin/python -tt
+# !/usr/bin/python -tt
 
 import sys
 import math
 import time
 
-from masterfieldgen import MasterFieldGen
-from basesfieldgen import ReturnToBaseFieldGen
-from flagsfieldgen import FlagsFieldGen
-from flagsfieldgen import RecoverFlagFieldGen
-from enemiesfieldgen import EnemiesFieldGen
-from obstaclesfieldgen import ObstaclesFieldGen
-from basesfieldgen import LeaveHomeBaseFieldGen
-from worldmap import WorldMap
-from explorefieldgen import ExploreFieldGen
 from bzrc import BZRC, Command
 from vec2d import Vec2d
+
+from obstacles import WorldBoundaries, ObstaclesTangential, ObstaclesNormal
+from enemies import Enemies
+from flags import CaptureEnemyFlags, DefendTeamFlag, ReturnToBase
 
 
 class Agent(object):
@@ -31,29 +26,40 @@ class Agent(object):
         self.enemies = []
         self.angle_diffs_by_tank = {}
 
-        self.world_map = WorldMap(bzrc)
+        # self.world_map = WorldMap(bzrc)
 
-        flags_field = FlagsFieldGen(bzrc)
-        enemies_field = EnemiesFieldGen(bzrc)
-        obstacles_field = ObstaclesFieldGen(bzrc, self.world_map)
-        leave_home_field = LeaveHomeBaseFieldGen(bzrc)
-        return_home_field = ReturnToBaseFieldGen(bzrc)
-        recover_flag_field = RecoverFlagFieldGen(bzrc)
-        explore_field = ExploreFieldGen(bzrc, self.world_map)
+        world_boundaries = WorldBoundaries(bzrc)
+        obstacles_normal = ObstaclesNormal(bzrc)
+        obstacles_tangential = ObstaclesTangential(bzrc)
+        enemies = Enemies(bzrc)
+        capture_enemy_flags = CaptureEnemyFlags(bzrc)
+        defend_team_flag = DefendTeamFlag(bzrc)
+        return_to_base = ReturnToBase(bzrc)
 
-        self.master_field_gen = MasterFieldGen(bzrc, [flags_field,
-                                                      enemies_field,
-                                                      obstacles_field,
-                                                      leave_home_field])
-        self.return_to_base = MasterFieldGen(bzrc, [enemies_field,
-                                                    obstacles_field,
-                                                    return_home_field])
-        self.recover_flag_strategy = MasterFieldGen(bzrc, [recover_flag_field,
-                                                           enemies_field,
-                                                           obstacles_field])
-        self.explore_world_strategy = MasterFieldGen(bzrc, [explore_field,
-                                                            enemies_field,
-                                                            obstacles_field])
+        self.behaviors = {
+            "capture": [
+                world_boundaries
+                , obstacles_tangential
+                , obstacles_normal
+                , enemies
+                , capture_enemy_flags
+            ],
+            "defend": [
+                world_boundaries
+                , obstacles_tangential
+                , obstacles_normal
+                , enemies
+                , defend_team_flag
+            ],
+            "return-to-base": [
+                world_boundaries
+                , obstacles_tangential
+                , obstacles_normal
+                , enemies
+                , return_to_base
+            ]
+        }
+
         self.last_time_diff = 0
         self.k_p = 0.1
         self.k_d = 0.5
@@ -97,13 +103,18 @@ class Agent(object):
         self.commands.append(Command(tank.index, field_vector.get_length(), angvel, shoot))
 
     def get_field_vector(self, tank):
-        # if tank.flag == '-':
-        #     if tank.index % 2 == 0:
-        #         return self.master_field_gen.vector_at(tank.x, tank.y)
-        #     return self.recover_flag_strategy.vector_at(tank.x, tank.y)
-        #
-        # return self.return_to_base.vector_at(tank.x, tank.y)
-        return self.explore_world_strategy.vector_at(tank.x, tank.vy)
+        # if the tank doesn't have a flag, then either go get a flag,
+        # or defend our own flag
+        if tank.flag == '-':
+            # select the tanks to defend the flag
+            if int(tank.index) % 3 == 0:
+                return self.vector_at("defend", tank.x, tank.y)
+
+            # other tanks go and get a flag
+            return self.vector_at("capture", tank.x, tank.y)
+
+        # tank has a flag, so get back to base ASAP
+        return self.vector_at("return-to-base", tank.x, tank.y)
 
     @staticmethod
     def normalize_angle(angle):
@@ -114,6 +125,18 @@ class Agent(object):
         elif angle > math.pi:
             angle -= 2 * math.pi
         return angle
+
+    def vector_at(self, behavior, x, y):
+        resultant_vector = Vec2d(0, 0)
+
+        do_shoot = False
+        for field in self.behaviors[behavior]:
+            field_vec, shoot = field.vector_at(x, y)
+
+            resultant_vector += field_vec
+            do_shoot = do_shoot or shoot
+
+        return resultant_vector, do_shoot
 
 
 def main():
