@@ -5,19 +5,10 @@ import math
 import time
 
 from masterfieldgen import MasterFieldGen
-from basesfieldgen import ReturnToBaseFieldGen
-from flagsfieldgen import FlagsFieldGen
-from flagsfieldgen import RecoverFlagFieldGen
-from enemiesfieldgen import EnemiesFieldGen
-from obstaclesfieldgen import ObstaclesFieldGen
-from basesfieldgen import LeaveHomeBaseFieldGen
 from trackenemyfieldgen import TrackEnemyFieldGen
-from worldmap import WorldMap
-from explorefieldgen import ExploreFieldGen
 from bzrc import BZRC, Command
 from vec2d import Vec2d
-from numpy import matrix
-from numpy import linalg
+
 
 class Agent(object):
     """Class handles all command and control logic for a teams tanks."""
@@ -32,33 +23,9 @@ class Agent(object):
         self.shots = []
         self.enemies = []
         self.angle_diffs_by_tank = {}
-        
-        
-        self.world_map = WorldMap(bzrc)
 
-#        flags_field = FlagsFieldGen(bzrc)
-#        enemies_field = EnemiesFieldGen(bzrc)
-#        obstacles_field = ObstaclesFieldGen(bzrc, self.world_map)
-#        leave_home_field = LeaveHomeBaseFieldGen(bzrc)
-#        return_home_field = ReturnToBaseFieldGen(bzrc)
-#        recover_flag_field = RecoverFlagFieldGen(bzrc)
-#        explore_field = ExploreFieldGen(bzrc, self.world_map)
-        track_field = TrackEnemyFieldGen(bzrc)
+        self.track_enemy_strategy = MasterFieldGen(bzrc, [(TrackEnemyFieldGen(bzrc))])
 
-#        self.master_field_gen = MasterFieldGen(bzrc, [flags_field,
-#                                                      enemies_field,
-#                                                      obstacles_field,
-#                                                      leave_home_field])
-#        self.return_to_base = MasterFieldGen(bzrc, [enemies_field,
-#                                                    obstacles_field,
-#                                                    return_home_field])
-#        self.recover_flag_strategy = MasterFieldGen(bzrc, [recover_flag_field,
-#                                                           enemies_field,
-#                                                           obstacles_field])
-#        self.explore_world_strategy = MasterFieldGen(bzrc, [explore_field,
-#                                                            enemies_field,
-#                                                            obstacles_field])
-        self.track_enemy_strategy = MasterFieldGen(bzrc, [track_field])
         self.last_time_diff = 0
         self.k_p = 0.1
         self.k_d = 0.5
