@@ -1,47 +1,50 @@
 #!/usr/bin/python -tt
 
+import time
+
 from vec2d import Vec2d
 from masterfieldgen import FieldGen
 
 
 class ObstaclesFieldGen(FieldGen):
-    def __init__(self, bzrc, default_factor=1):
+    def __init__(self, bzrc, world_map, default_factor=1):
         super(ObstaclesFieldGen, self).__init__(bzrc)
 
         self.offset = 40
         self.force = 1
         self.default_factor = default_factor
-        self.obstacles = self.bzrc.get_obstacles()
         self.shoot = False
+        self.world_map = world_map
+        self.init_time = time.time()
 
     def vector_at(self, x, y):
         factor = self.default_factor
 
-        # for each obstacle, compute it's effect at the given location
-        for obstacle in self.obstacles:
-            north = obstacle[0][1]
-            east = obstacle[0][0]
-            south = obstacle[2][1]
-            west = obstacle[2][0]
+        if (self.world_map.world_size / 2) - abs(x) < self.offset:
+            return Vec2d(-x, 0).normalized() * self.force * factor, self.shoot
+        if (self.world_map.world_size / 2) - abs(y) < self.offset:
+            return Vec2d(0, -y).normalized() * self.force * factor, self.shoot
 
-            # if the point is between the north and the south, then ...
-            if south <= y <= north:
-                # if the point is within the margin on the west, then return a westward vector
-                if west - self.offset < x < west:
-                    return Vec2d(-self.force, 0) * factor, self.shoot
-                # or if the point is within the margin on the east, then return an eastward vector
-                elif east < x < east + self.offset:
-                    return Vec2d(self.force, 0) * factor, self.shoot
-            # or if the point is between the east and the west, then ...
-            elif west <= x <= east:
-                # if the point is within the margin on the south, then return a southward vector
-                if south - self.offset < y < south:
-                    return Vec2d(0, -self.force) * factor, self.shoot
-                # or if the point is within the margin on the north, then return a northward vector
-                elif north < y < north + self.offset:
-                    return Vec2d(0, self.force) * factor, self.shoot
+        if (time.time() - self.init_time) % 1 < 1:
+            self.world_map.update_grid(self.bzrc)
 
-        return Vec2d(0, 0), self.shoot
+        closest_edge = self.world_map.obstacle_edge_at(x, y, self.offset)
+        if closest_edge is None:
+            return Vec2d(0, 0), self.shoot
+
+        # position vector
+        vector_s = Vec2d(x, y)
+
+        # vector for endpoint 1
+        vector_a = Vec2d(closest_edge[0])
+
+        # vector for endpoint 2
+        vector_c = Vec2d(closest_edge[1])
+
+        # final vector is the sum of vector from C to S and from A to S
+        final_vector = (vector_s - vector_c) + (vector_s - vector_a)
+
+        return final_vector.normalized() * self.force * factor, self.shoot
 
 
 class ObstaclesFieldGen2(FieldGen):
@@ -70,7 +73,7 @@ class ObstaclesFieldGen2(FieldGen):
             # if the point lies outside the radius (plus an offset), then skip this obstacle
             distance = radial_vector.get_length()
             threshold = 0.5 * diameter_vector.get_length() + self.offset
-            if distance > threshold:
+            if 0 == distance or distance > threshold:
                 continue
 
             return radial_vector.perpendicular_normal() * factor * self.force * (threshold / distance), self.shoot
