@@ -4,9 +4,11 @@ intentionally avoided "giving it all away."
 '''
 
 from __future__ import division
+from itertools import cycle
 
 from bzrc import BZRC
 from pfagent import Agent
+from vec2d import Vec2d
 
 
 try:
@@ -62,14 +64,17 @@ pfagent = Agent(bzrc)
 
 ########################################################################
 # Field and Obstacle Definitions
+import obstacles
 
 def generate_field_function(scale):
     def function(x, y):
         '''User-defined field function.'''
-        vector, shoot = pfagent.master_field_gen.vector_at(x, y)
-        #vector, shoot = pfagent.return_to_base.vector_at(x, y)
+        # vector, shoot = pfagent.master_field_gen.vector_at(x, y)
+        # vector, shoot = pfagent.return_to_base.vector_at(x, y)
+        vec, shoot = pfagent.vector_at("capture", x, y)
 
-        return vector.x, vector.y
+        return vec.x, vec.y
+        # return x, y
 
     return function
 
@@ -152,33 +157,33 @@ def plot_field(function):
 ########################################################################
 # Plot the potential fields to a file
 
-outfile = open(FILENAME, 'w')
-print >> outfile, gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2)
-print >> outfile, draw_obstacles(OBSTACLES)
-field_function = generate_field_function(150)
-print >> outfile, plot_field(field_function)
+# outfile = open(FILENAME, 'w')
+# print >> outfile, gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2)
+# print >> outfile, draw_obstacles(OBSTACLES)
+# field_function = generate_field_function(150)
+# print >> outfile, plot_field(field_function)
 
 
 ########################################################################
 # Animate a changing field, if the Python Gnuplot library is present
 
-# try:
-#     from Gnuplot import GnuplotProcess
-# except ImportError:
-#     print "Sorry.  You don't have the Gnuplot module installed."
-#     import sys
-#
-#     sys.exit(-1)
-#
-# forward_list = list(linspace(ANIMATION_MIN, ANIMATION_MAX, ANIMATION_FRAMES / 2))
-# backward_list = list(linspace(ANIMATION_MAX, ANIMATION_MIN, ANIMATION_FRAMES / 2))
-# anim_points = forward_list + backward_list
-#
-# gp = GnuplotProcess(persist=False)
-# gp.write(gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2))
-# gp.write(draw_obstacles(OBSTACLES))
-# for scale in cycle(anim_points):
-#     field_function = generate_field_function(scale)
-#     gp.write(plot_field(field_function))
+try:
+    from Gnuplot import GnuplotProcess
+except ImportError:
+    print "Sorry.  You don't have the Gnuplot module installed."
+    import sys
+
+    sys.exit(-1)
+
+forward_list = list(linspace(ANIMATION_MIN, ANIMATION_MAX, ANIMATION_FRAMES / 2))
+backward_list = list(linspace(ANIMATION_MAX, ANIMATION_MIN, ANIMATION_FRAMES / 2))
+anim_points = forward_list + backward_list
+
+gp = GnuplotProcess(persist=False)
+gp.write(gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2))
+gp.write(draw_obstacles(OBSTACLES))
+for scale in cycle(anim_points):
+    field_function = generate_field_function(scale)
+    gp.write(plot_field(field_function))
 
 # vim: et sw=4 sts=4

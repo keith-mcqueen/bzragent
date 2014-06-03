@@ -11,7 +11,7 @@ class EnemiesFieldGen(FieldGen):
         self.threshold = 100
         self.shooting_range = 30
         self.default_factor = default_factor
-        self.callsign = bzrc.get_mytanks()[0].callsign
+        # self.callsign = bzrc.get_mytanks()[0].callsign
 
     def vector_at(self, x, y):
         factor = self.default_factor
