@@ -4,6 +4,7 @@
 import sys
 import math
 import time
+import random
 
 from masterfieldgen import MasterFieldGen
 from basesfieldgen import ReturnToBaseFieldGen
@@ -16,8 +17,6 @@ from worldmap import WorldMap
 from explorefieldgen import ExploreFieldGen
 from bzrc import BZRC, Command
 from vec2d import Vec2d
-import random
-
 
 class Agent(object):
     """Class handles all command and control logic for a teams tanks."""
