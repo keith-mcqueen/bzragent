@@ -19,8 +19,6 @@ from vec2d import Vec2d
 from numpy import matrix
 from numpy import linalg
 
-
-
 class Agent(object):
     """Class handles all command and control logic for a teams tanks."""
 
@@ -35,16 +33,7 @@ class Agent(object):
         self.enemies = []
         self.angle_diffs_by_tank = {}
         
-        #Matrices for Kalman Agent
-        self.p_mean_estimate = matrix( [[0],[0],[0],[0],[0],[0]] )
-        self.p_covariance_estimate = matrix( [[100, 0, 0, 0, 0, 0],[0, 0.1, 0, 0, 0, 0],[0, 0, 0.1, 0, 0, 0],[0, 0, 0, 100, 0, 0],[0, 0, 0, 0, 0.1, 0],[0, 0, 0, 0, 0, 0.1]] )
-        self.time_d = .5
-        self.friction = 0
-        self.motion_model = matrix( [[1, self.time_d, (self.time_d*self.time_d)/2, 0, 0, 0], [0, 1, self.time_d, 0, 0, 0], [0, -self.friction, 1, 0, 0, 0], [0, 0, 0, 1, self.time_d, (self.time_d*self.time_d)/2], [0, 0, 0, 0, 1, self.time_d], [0, 0, 0, 0, -self.friction, 1]]) 
-        self.n_covariance_estimate = matrix( [[0.1, 0, 0, 0, 0, 0],[0, 0.1, 0, 0, 0, 0],[0, 0, 100, 0, 0, 0],[0, 0, 0, 0.1, 0, 0],[0, 0, 0, 0, 0.1, 0],[0, 0, 0, 0, 0, 100]] )
-        self.observation_matrix = matrix( [[1,0,0,0,0,0],[0,0,0,1,0,0]] )
-        self.standard_d = 5
-        self.covariance_matrix = matrix( [[self.standard_d*self.standard_d, 0],[0,self.standard_d*self.standard_d]] )
+        
         self.world_map = WorldMap(bzrc)
 
 #        flags_field = FlagsFieldGen(bzrc)
@@ -112,7 +101,7 @@ class Agent(object):
         angvel = angle_diff#(self.k_p * angle_diff) + (self.k_d * d_e)
         
         # for Kalman lab, the agent can only rotate, so keep velocity at 0
-        self.commands.append(Command(tank.index, 0, angvel, shoot))
+        self.commands.append(Command(tank.index, 0, angvel, shoot and angle_diff < .5))
 
     def get_field_vector(self, tank):
         return self.track_enemy_strategy.vector_at(tank.x, tank.vy)
