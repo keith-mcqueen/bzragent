@@ -1,43 +1,22 @@
 #!/usr/bin/python -tt
 
-# An incredibly simple agent.  All we do is find the closest enemy tank, drive
-# towards it, and shoot.  Note that if friendly fire is allowed, you will very
-# often kill your own tanks with this code.
-
-#################################################################
-# NOTE TO STUDENTS
-# This is a starting point for you.  You will need to greatly
-# modify this code if you want to do anything useful.  But this
-# should help you to know how to interact with BZRC in order to
-# get the information you need.
-#
-# After starting the bzrflag server, this is one way to start
-# this code:
-# python agent0.py [hostname] [port]
-#
-# Often this translates to something like the following (with the
-# port name being printed out by the bzrflag server):
-# python agent0.py localhost 49857
-#################################################################
-
 import sys
-import math
 import time
 
-from bzrc import BZRC, Command
+from bzrc import BZRC
+from pfagent import Agent
 
 
-class Agent(object):
+class SittingDuck(Agent):
     """Class handles all command and control logic for a teams tanks."""
-
     def __init__(self, bzrc):
-        self.bzrc = bzrc
-        self.constants = self.bzrc.get_constants()
-        self.commands = []
+        super(SittingDuck, self).__init__(bzrc)
 
     def tick(self, time_diff):
+        # do nothing
         pass
-   
+
+
 def main():
     # Process CLI arguments.
     try:
@@ -52,7 +31,7 @@ def main():
     #bzrc = BZRC(host, int(port), debug=True)
     bzrc = BZRC(host, int(port))
 
-    agent = Agent(bzrc)
+    agent = SittingDuck(bzrc)
 
     prev_time = time.time()
 

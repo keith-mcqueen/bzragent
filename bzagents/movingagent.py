@@ -1,69 +1,38 @@
 
 #!/usr/bin/python -tt
 
-import sys
 import math
+import sys
 import time
 import random
 
-from masterfieldgen import MasterFieldGen
-from basesfieldgen import ReturnToBaseFieldGen
-from flagsfieldgen import FlagsFieldGen
-from flagsfieldgen import RecoverFlagFieldGen
-from enemiesfieldgen import EnemiesFieldGen
-from obstaclesfieldgen import ObstaclesFieldGen
-from basesfieldgen import LeaveHomeBaseFieldGen
-from worldmap import WorldMap
-from explorefieldgen import ExploreFieldGen
-from bzrc import BZRC, Command
+from bzrc import BZRC
 from vec2d import Vec2d
+from obstacles import WorldBoundaries
+from pfagent import Agent
 
-class Agent(object):
+
+class StraightAgent(Agent):
     """Class handles all command and control logic for a teams tanks."""
-
     def __init__(self, bzrc):
-        self.bzrc = bzrc
-        self.constants = self.bzrc.get_constants()
-        self.commands = []
-        self.last_time_diff = 0
-        self.target_angle = 0
-        self.target_velocity = random.uniform(.1, 1)
+        super(StraightAgent, self).__init__(bzrc)
 
-    def tick(self, time_diff):
-        """Some time has passed; decide what to do next."""
-        # clear the commands
-        self.commands = []
+        self.target_velocity = random.uniform(0.5, 1)
+        self.field = WorldBoundaries(bzrc)
 
-        # calculate the time differential
-        d_t = time_diff - self.last_time_diff
+    def get_field_vector(self, tank):
+        field_vec, shoot = self.field.vector_at(tank.x, tank.y)
+        # print "tank is at position: (%s, %s)" % (tank.x, tank.y)
+        # print "checking world boundaries vector: %s" % field_vec
+        if field_vec.x != 0 or field_vec.y != 0:
+            return field_vec, False
 
-        # save the current time_diff for next time (no pun intended)
-        self.last_time_diff = time_diff
+        # if the tank has some velocity, then just use that
+        if tank.vx != 0 and tank.vy != 0:
+            return Vec2d(tank.vx, tank.vy), False
 
-        for tank in self.bzrc.get_mytanks():
-            if tank.status.startswith('alive'):  # and tank.index == 0:
-                self.direct_tank(tank, d_t)
-
-        self.bzrc.do_commands(self.commands)
-
-    def direct_tank(self, tank, time_diff):
-        # get the angle between the desired and current vectors
-        angle = self.normalize_angle(self.target_angle)
-        
-        # now set the speed and angular velocity
-        self.commands.append(Command(tank.index, self.target_velocity, angle, False))
-
-   
-
-    @staticmethod
-    def normalize_angle(angle):
-        """Make any angle be between +/- pi."""
-        angle -= 2 * math.pi * int(angle / (2 * math.pi))
-        if angle <= -math.pi:
-            angle += 2 * math.pi
-        elif angle > math.pi:
-            angle -= 2 * math.pi
-        return angle
+        # just go in the direction that the tank is currently pointing
+        return Vec2d(math.cos(tank.angle), math.sin(tank.angle)), False
 
 
 def main():
@@ -80,7 +49,7 @@ def main():
     #bzrc = BZRC(host, int(port), debug=True)
     bzrc = BZRC(host, int(port))
 
-    agent = Agent(bzrc)
+    agent = StraightAgent(bzrc)
 
     prev_time = time.time()
 
