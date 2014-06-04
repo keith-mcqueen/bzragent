@@ -71,10 +71,9 @@ class TrackEnemyFieldGen(FieldGen):
             k_matrix = (F_sigma).dot(self.H_T)
             inverse = linalg.inv(self.H.dot(F_sigma).dot(self.H_T) + self.sigma_z)
             k_matrix = k_matrix.dot(inverse)
-            # self.mu_t = self.F.dot(self.mu_t) +
-            # k_matrix.dot(matrix([[tank.x], [tank.y]]) -
-            # self.H.dot(self.F).dot(self.mu_t))
-            self.mu_t = self.F.dot(self.mu_t)
+            self.mu_t = self.F.dot(self.mu_t) + k_matrix.dot(
+                matrix([[tank.x], [tank.y]]) - self.H.dot(self.F).dot(self.mu_t))
+            # self.mu_t = self.F.dot(self.mu_t)
             self.sigma_t = (numpy.identity(6) - k_matrix.dot(self.H)).dot(F_sigma)
 
         # get the distance between the current tank and the given location
