@@ -9,6 +9,7 @@ import random
 from bzrc import BZRC
 from vec2d import Vec2d
 from obstacles import WorldBoundaries
+from enemies import Enemies
 from pfagent import Agent
 
 
@@ -18,12 +19,15 @@ class StraightAgent(Agent):
         super(StraightAgent, self).__init__(bzrc)
 
         self.target_velocity = random.uniform(0.5, 1)
-        self.field = WorldBoundaries(bzrc)
+        self.boundaries = WorldBoundaries(bzrc)
+        self.enemies = Enemies(bzrc)
 
     def get_field_vector(self, tank):
-        field_vec, shoot = self.field.vector_at(tank.x, tank.y)
-        # print "tank is at position: (%s, %s)" % (tank.x, tank.y)
-        # print "checking world boundaries vector: %s" % field_vec
+        field_vec, shoot = self.boundaries.vector_at(tank.x, tank.y)
+        if field_vec.x != 0 or field_vec.y != 0:
+            return field_vec, False
+
+        field_vec, shoot = self.enemies.vector_at(tank.x, tank.y)
         if field_vec.x != 0 or field_vec.y != 0:
             return field_vec, False
 
