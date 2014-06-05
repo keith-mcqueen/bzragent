@@ -79,7 +79,7 @@ class Agent(object):
         self.commands.append(Command(tank.index, 0, angle_diff, abs(angle_diff) < math.radians(1.0)))
 
     def get_field_vector(self, tank):
-        return self.track_enemy_strategy.vector_at(tank.x, tank.vy)
+        return self.track_enemy_strategy.vector_at(tank.x, tank.y)
 
     @staticmethod
     def normalize_angle(angle):

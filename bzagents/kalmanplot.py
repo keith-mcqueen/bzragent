@@ -104,12 +104,13 @@ except ImportError:
 forward_list = list(linspace(ANIMATION_MIN, ANIMATION_MAX, ANIMATION_FRAMES/2))
 backward_list = list(linspace(ANIMATION_MAX, ANIMATION_MIN, ANIMATION_FRAMES/2))
 anim_points = forward_list + backward_list
-
+track_enemy_field_gen.vector_at(0,0)
 sigma_x, sigma_y, x, y = track_enemy_field_gen.get_sigma_t()
 gp = GnuplotProcess(persist=False)
 gp.write(gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2, sigma_x, sigma_y, 0, x, y))
 
 for scale in cycle(anim_points):
+    track_enemy_field_gen.vector_at(0,0)
     sigma_x, sigma_y, x, y = track_enemy_field_gen.get_sigma_t()
     gp.write(gnuplot_header(-WORLDSIZE / 2, WORLDSIZE / 2, sigma_x, sigma_y, 0, x, y))
   
