@@ -8,6 +8,7 @@ from vec2d import Vec2d
 from bzrc import BZRC
 from pfagent import Agent
 from obstacles import WorldBoundaries
+from enemies import Enemies
 
 
 class NonConformingAgent(Agent):
@@ -18,7 +19,8 @@ class NonConformingAgent(Agent):
 
         self.invocations_before_update = 0
         self.invocation_count = 0
-        self.field = WorldBoundaries(bzrc)
+        self.boundaries = WorldBoundaries(bzrc)
+        self.enemies = Enemies(bzrc)
         self.last_vector = Vec2d(0.0, 0.0)
 
     def get_field_vector(self, tank):
@@ -29,7 +31,12 @@ class NonConformingAgent(Agent):
         self.invocation_count = 0
         self.invocations_before_update = random.randrange(100, 1000)
 
-        field_vec, shoot = self.field.vector_at(tank.x, tank.y)
+        field_vec, shoot = self.boundaries.vector_at(tank.x, tank.y)
+        if field_vec.x != 0 or field_vec.y != 0:
+            self.last_vector = field_vec
+            return field_vec, False
+
+        field_vec, shoot = self.enemies.vector_at(tank.x, tank.y)
         if field_vec.x != 0 or field_vec.y != 0:
             self.last_vector = field_vec
             return field_vec, False
