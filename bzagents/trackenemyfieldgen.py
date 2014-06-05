@@ -61,6 +61,9 @@ class TrackEnemyFieldGen(FieldGen):
 
         self.last_updated = time.time()
 
+    def get_sigma_t(self):
+        return self.sigma_t.item((0,0)), self.sigma_t.item((3,3)), self.mu_t.item((0,0)), self.mu_t.item((3,0))
+    
     def vector_at(self, x, y):
         # only worry about one tank
         tank = self.bzrc.get_othertanks()[0]
