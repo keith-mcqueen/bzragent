@@ -50,10 +50,10 @@ class TrackEnemyFieldGen(FieldGen):
         self.f_transpose = self.f.transpose()
         self.sigma_x = matrix([[0.1, 0, 0, 0, 0, 0],
                                [0, 0.1, 0, 0, 0, 0],
-                               [0, 0, 100, 0, 0, 0],
+                               [0, 0, 70, 0, 0, 0],
                                [0, 0, 0, 0.1, 0, 0],
                                [0, 0, 0, 0, 0.1, 0],
-                               [0, 0, 0, 0, 0, 100]])
+                               [0, 0, 0, 0, 0, 70]])
         self.h = matrix([[1, 1, 0, 0, 0, 0],
                          [0, 0, 0, 1, 1, 0]])
         self.h_transpose = self.h.transpose()
@@ -87,11 +87,11 @@ class TrackEnemyFieldGen(FieldGen):
 
             # ######### Now compute where we think the tank *WILL* be
             self.mu_t = self.f.dot(self.mu_t)
-
+            
         # get the distance between the current tank and the given location
         # distance = location_vector.get_distance(tank_vector)
         # normalize the vector to the tank
         vector_to_position = Vec2d(self.mu_t.item(0) - x, self.mu_t.item(3) - y)
-        target_vector = vector_to_position + Vec2d(self.mu_t.item(1), self.mu_t.item(4))
+        target_vector = vector_to_position + Vec2d(self.mu_t.item(1)*(vector_to_position.get_length()/40), self.mu_t.item(4)*(vector_to_position.get_length()/40))
 
         return target_vector, True

@@ -76,7 +76,7 @@ class Agent(object):
         # angvel = (self.k_p * angle_diff) + (self.k_d * d_e)
 
         # for Kalman lab, the agent can only rotate, so keep velocity at 0
-        self.commands.append(Command(tank.index, 0, angle_diff, abs(angle_diff) < math.radians(1.0)))
+        self.commands.append(Command(tank.index, 0, angle_diff, abs(angle_diff) < math.radians(3.0)))
 
     def get_field_vector(self, tank):
         return self.track_enemy_strategy.vector_at(tank.x, tank.y)
