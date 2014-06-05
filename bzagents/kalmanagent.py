@@ -50,8 +50,8 @@ class Agent(object):
         # get vector(s) for the potential fields around the tank (this is the vector I want the tank to have)
         field_vector, shoot = self.get_field_vector(tank)
 
-        print "vector to target: %s" % field_vector
-        print "vector to target angle: %s" % math.degrees(field_vector.angle)
+        # print "vector to target: %s" % field_vector
+        # print "vector to target angle: %s" % math.degrees(field_vector.angle)
 
         # get the tank's current velocity vector
         # tank_vector = Vec2d(tank.vx, tank.vy)
@@ -59,12 +59,12 @@ class Agent(object):
         # tank_vector[0] = 1
         #     tank_vector.angle = math.degrees(tank.angle)
 
-        print "my angle: %s" % math.degrees(tank.angle)
+        # print "my angle: %s" % math.degrees(tank.angle)
 
         # get the angle between the desired and current vectors
         angle_diff = self.normalize_angle(field_vector.angle - tank.angle)
         # angle_diff = field_vector.angle - tank.angle
-        print "angle diff: %s" % math.degrees(angle_diff)
+        # print "angle diff: %s" % math.degrees(angle_diff)
 
         # if tank.callsign in self.angle_diffs_by_tank:
         # last_angle_diff = self.angle_diffs_by_tank[tank.callsign]
@@ -76,7 +76,7 @@ class Agent(object):
         # angvel = (self.k_p * angle_diff) + (self.k_d * d_e)
 
         # for Kalman lab, the agent can only rotate, so keep velocity at 0
-        self.commands.append(Command(tank.index, 0, angle_diff, abs(angle_diff) < 1.0))
+        self.commands.append(Command(tank.index, 0, angle_diff, abs(angle_diff) < math.radians(1.0)))
 
     def get_field_vector(self, tank):
         return self.track_enemy_strategy.vector_at(tank.x, tank.vy)

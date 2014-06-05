@@ -83,7 +83,7 @@ class TrackEnemyFieldGen(FieldGen):
             self.sigma_t = (numpy.identity(6) - k_matrix.dot(self.h)).dot(f_sigma)
 
             # ######### Now compute where we think the tank *WILL* be
-            # self.mu_t = self.f.dot(self.mu_t)
+            self.mu_t = self.f.dot(self.mu_t)
 
         # get the distance between the current tank and the given location
         # distance = location_vector.get_distance(tank_vector)

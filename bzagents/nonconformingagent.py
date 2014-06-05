@@ -31,7 +31,7 @@ class NonConformingAgent(Agent):
         self.invocation_count = 0
         self.invocations_before_update = random.randrange(100, 1000)
 
-        field_vec, shoot = self.field.vector_at(tank.x, tank.y)
+        field_vec, shoot = self.boundaries.vector_at(tank.x, tank.y)
         if field_vec.x != 0 or field_vec.y != 0:
             self.last_vector = field_vec
             return field_vec, False
