@@ -29,18 +29,27 @@ class NonConformingAgent(Agent):
             return self.last_vector, False
 
         self.invocation_count = 0
-        self.invocations_before_update = random.randrange(100, 1000)
+        self.invocations_before_update = random.randrange(100, 600)
+        print "updated invocations_before_update to %s" % self.invocations_before_update
 
+        print "checking for boundaries"
         field_vec, shoot = self.boundaries.vector_at(tank.x, tank.y)
         if field_vec.x != 0 or field_vec.y != 0:
+            print "avoiding boundaries"
+            print ""
             self.last_vector = field_vec
             return field_vec, False
 
+        print "checking for enemy tanks"
         field_vec, shoot = self.enemies.vector_at(tank.x, tank.y)
         if field_vec.x != 0 or field_vec.y != 0:
+            print "avoiding enemy tanks"
+            print ""
             self.last_vector = field_vec
             return field_vec, False
 
+        print "generating 'random' vector"
+        print ""
         vx = random.uniform(-1.0, 1.0)
         vy = random.uniform(-1.0, 1.0)
         scale = random.uniform(-1.0, 1.0)
