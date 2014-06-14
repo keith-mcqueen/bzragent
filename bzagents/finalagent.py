@@ -6,10 +6,12 @@ import time
 
 from bzrc import BZRC, Command
 from vec2d import Vec2d
-from obstacles import WorldBoundaries, ObstaclesOccGrid
-from enemies import Enemies
-from flags import CaptureEnemyFlags, DefendTeamFlag, ReturnToBase
 
+from obstaclesfieldgen import ObstaclesFieldGen
+from obstacles import WorldBoundaries, ObstaclesTangential, ObstaclesNormal
+from enemies import Kalman, Enemies, Attack
+from flags import CaptureEnemyFlags, DefendTeamFlag, ReturnToBase
+from worldmap import WorldMap
 
 class Agent(object):
     """Class handles all command and control logic for a teams tanks."""
@@ -17,6 +19,8 @@ class Agent(object):
     def __init__(self, bzrc):
         self.bzrc = bzrc
         self.constants = self.bzrc.get_constants()
+        # This is used to determined what each tank will do and duties at the end are lost first as our tanks die
+        self.duties = ["capture", "defend", "attack", "capture", "defend", "attack", "capture", "defend", "attack", "capture"]
         self.commands = []
         self.my_tanks = []
         self.other_tanks = []
@@ -24,43 +28,52 @@ class Agent(object):
         self.shots = []
         self.enemies = []
         self.angle_diffs_by_tank = {}
+        
+        self.kalman = Kalman(bzrc)
+        self.world_map = WorldMap(bzrc)
 
-        # self.world_map = WorldMap(bzrc)
-
-        world_boundaries = WorldBoundaries(bzrc)
-        # obstacles_normal = ObstaclesNormal(bzrc)
-        # obstacles_tangential = ObstaclesTangential(bzrc)
-        obstacles_occ_grid = ObstaclesOccGrid(bzrc)
-
-        enemies = Enemies(bzrc)
+        obstacles = ObstaclesFieldGen(bzrc, self.world_map)
+        #world_boundaries = WorldBoundaries(bzrc)
+        #obstacles_normal = ObstaclesNormal(bzrc)
+        #obstacles_tangential = ObstaclesTangential(bzrc)
+        enemies = Enemies(bzrc, self.kalman)
         capture_enemy_flags = CaptureEnemyFlags(bzrc)
         defend_team_flag = DefendTeamFlag(bzrc)
         return_to_base = ReturnToBase(bzrc)
+        attack = Attack(bzrc, self.kalman)
+        attack_nearby = Attack(bzrc, self.kalman, True)
 
         self.behaviors = {
             "capture": [
-                world_boundaries
-                # , obstacles_tangential
-                # , obstacles_normal
-                , obstacles_occ_grid
+                obstacles
+#                world_boundaries
+#                , obstacles_tangential
+#                , obstacles_normal
                 , enemies
                 , capture_enemy_flags
             ],
             "defend": [
-                world_boundaries
-                # , obstacles_tangential
-                # , obstacles_normal
-                , obstacles_occ_grid
-                , enemies
+                obstacles
+#                world_boundaries
+#                , obstacles_tangential
+#                , obstacles_normal
+                , attack_nearby
                 , defend_team_flag
             ],
             "return-to-base": [
-                world_boundaries
-                # , obstacles_tangential
-                # , obstacles_normal
-                , obstacles_occ_grid
+                obstacles
+#                world_boundaries
+#                , obstacles_tangential
+#                , obstacles_normal
                 , enemies
                 , return_to_base
+            ],
+            "attack": [
+                obstacles
+#                world_boundaries
+#                , obstacles_tangential
+#                , obstacles_normal
+                , attack
             ]
         }
 
@@ -78,10 +91,13 @@ class Agent(object):
 
         # save the current time_diff for next time (no pun intended)
         self.last_time_diff = time_diff
-
+        self.dead = 0
+        
         for tank in self.bzrc.get_mytanks():
             if tank.status.startswith('alive'):  # and tank.index == 0:
                 self.direct_tank(tank, d_t)
+            else:
+                self.dead += 1
 
         self.bzrc.do_commands(self.commands)
 
@@ -104,18 +120,13 @@ class Agent(object):
         angvel = (self.k_p * angle_diff) + (self.k_d * d_e)
 
         # now set the speed and angular velocity
-        self.commands.append(Command(tank.index, field_vector.get_length(), angvel, shoot))
+        self.commands.append(Command(tank.index, field_vector.get_length(), angvel, abs(angle_diff) < math.radians(3.0)))
 
     def get_field_vector(self, tank):
         # if the tank doesn't have a flag, then either go get a flag,
         # or defend our own flag
         if tank.flag == '-':
-            # select the tanks to defend the flag
-            if int(tank.index) % 3 == 0:
-                return self.vector_at("defend", tank.x, tank.y)
-
-            # other tanks go and get a flag
-            return self.vector_at("capture", tank.x, tank.y)
+            return self.vector_at(self.duties[tank.index - self.dead], tank.x, tank.y)
 
         # tank has a flag, so get back to base ASAP
         return self.vector_at("return-to-base", tank.x, tank.y)
