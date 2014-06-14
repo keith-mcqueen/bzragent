@@ -6,12 +6,11 @@ import time
 
 from bzrc import BZRC, Command
 from vec2d import Vec2d
-
-from obstaclesfieldgen import ObstaclesFieldGen
-from obstacles import WorldBoundaries, ObstaclesTangential, ObstaclesNormal
-from enemies import Kalman, Enemies, Attack
+from obstacles import WorldBoundaries, ObstaclesOccGrid
+from enemies import Enemies, Attack
 from flags import CaptureEnemyFlags, DefendTeamFlag, ReturnToBase
 from worldmap import WorldMap
+
 
 class Agent(object):
     """Class handles all command and control logic for a teams tanks."""
@@ -29,50 +28,39 @@ class Agent(object):
         self.enemies = []
         self.angle_diffs_by_tank = {}
         
-        self.kalman = Kalman(bzrc)
         self.world_map = WorldMap(bzrc)
 
-        obstacles = ObstaclesFieldGen(bzrc, self.world_map)
-        #world_boundaries = WorldBoundaries(bzrc)
-        #obstacles_normal = ObstaclesNormal(bzrc)
-        #obstacles_tangential = ObstaclesTangential(bzrc)
-        enemies = Enemies(bzrc, self.kalman)
+        world_boundaries = WorldBoundaries(bzrc)
+        obstacles_occ_grid = ObstaclesOccGrid(bzrc)
+        enemies = Enemies(bzrc)
         capture_enemy_flags = CaptureEnemyFlags(bzrc)
         defend_team_flag = DefendTeamFlag(bzrc)
         return_to_base = ReturnToBase(bzrc)
-        attack = Attack(bzrc, self.kalman)
-        attack_nearby = Attack(bzrc, self.kalman, True)
+        attack = Attack(bzrc)
+        attack_nearby = Attack(bzrc, True)
 
         self.behaviors = {
             "capture": [
-                obstacles
-#                world_boundaries
-#                , obstacles_tangential
-#                , obstacles_normal
+                world_boundaries
+                , obstacles_occ_grid
                 , enemies
                 , capture_enemy_flags
             ],
             "defend": [
-                obstacles
-#                world_boundaries
-#                , obstacles_tangential
-#                , obstacles_normal
+                world_boundaries
+                , obstacles_occ_grid
                 , attack_nearby
                 , defend_team_flag
             ],
             "return-to-base": [
-                obstacles
-#                world_boundaries
-#                , obstacles_tangential
-#                , obstacles_normal
+                world_boundaries
+                , obstacles_occ_grid
                 , enemies
                 , return_to_base
             ],
             "attack": [
-                obstacles
-#                world_boundaries
-#                , obstacles_tangential
-#                , obstacles_normal
+                world_boundaries
+                , obstacles_occ_grid
                 , attack
             ]
         }

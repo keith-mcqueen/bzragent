@@ -3,15 +3,17 @@ __author__ = 'keith'
 import time
 import numpy
 import math
-
 from numpy import matrix
 from numpy import linalg
-from vec2d import Vec2d
 
+from vec2d import Vec2d
 from masterfieldgen import FieldGen
 
+
 # Should share one instance of this class with any object that needs to know enemy tanks'
-# location to avoid redundency of computing the Kalman matrices in multiple places.
+# location to avoid redundancy of computing the Kalman matrices in multiple places.
+
+
 class Kalman(object):
     def __init__(self, bzrc):
         self.bzrc = bzrc
@@ -39,8 +41,8 @@ class Kalman(object):
                                [0, self.standard_d * self.standard_d]])
         # keep arrays of the Kalman matrices to keep track of all enemy tanks
         self.mu_t = []
-        self.sigma_t = []                        
-       
+        self.sigma_t = []
+
         # assuming get_othertanks always returns tanks in the same order
         bases = self.bzrc.get_bases()
         tanks = self.bzrc.get_othertanks()
@@ -50,32 +52,33 @@ class Kalman(object):
                 if base.color == tank.color:
                     enemy_base = base
                     break
-                    
+
             self.mu_t.append(matrix([[enemy_base.x],
-                                [0],
-                                [0],
-                                [enemy_base.y],
-                                [0],
-                                [0]]))
+                                     [0],
+                                     [0],
+                                     [enemy_base.y],
+                                     [0],
+                                     [0]]))
 
             self.sigma_t.append(matrix([[100, 0, 0, 0, 0, 0],
-                                   [0, 0.1, 0, 0, 0, 0],
-                                   [0, 0, 0.1, 0, 0, 0],
-                                   [0, 0, 0, 100, 0, 0],
-                                   [0, 0, 0, 0, 0.1, 0],
-                                   [0, 0, 0, 0, 0, 0.1]]))
+                                        [0, 0.1, 0, 0, 0, 0],
+                                        [0, 0, 0.1, 0, 0, 0],
+                                        [0, 0, 0, 100, 0, 0],
+                                        [0, 0, 0, 0, 0.1, 0],
+                                        [0, 0, 0, 0, 0, 0.1]]))
 
         self.last_updated = time.time()
-        
+
     def get_sigma_t(self, index):
         self.update_matrices()
-        return self.sigma_t[index].item((0,0)), self.sigma_t[index].item((3,3)), self.mu_t[index].item((0,0)), self.mu_t[index].item((3,0))
-    
+        return self.sigma_t[index].item((0, 0)), self.sigma_t[index].item((3, 3)), self.mu_t[index].item((0, 0)), \
+               self.mu_t[index].item((3, 0))
+
     def get_mu_t(self, index):
         self.update_matrices()
         # Return where we think the tank *WILL* be
         return self.f.dot(self.mu_t[index])
-    
+
     # We might just want to update each tank at a separate time interval so this method will run quicker
     def update_matrices(self):
         if time.time() - self.last_updated >= self.dt:
@@ -98,14 +101,15 @@ class Kalman(object):
                     matrix([[tank.x], [tank.y]]) - self.h.dot(self.f).dot(self.mu_t[index]))
                 self.sigma_t[index] = (numpy.identity(6) - k_matrix.dot(self.h)).dot(f_sigma)
 
+
 class Enemies(FieldGen):
-    def __init__(self, bzrc, kalman):
+    def __init__(self, bzrc):
         super(Enemies, self).__init__(bzrc)
 
         self.effective_range_sqrd = 50 ** 2
-        #self.shooting_range_sqrd = 30 ** 2
-        self.kalman = kalman
-        
+        # self.shooting_range_sqrd = 30 ** 2
+        self.kalman = Kalman(self.bzrc)
+
         self.other_tanks = self.bzrc.get_othertanks()
 
         self.invocations_before_refresh = 10
@@ -132,21 +136,20 @@ class Enemies(FieldGen):
 
         return Vec2d(0, 0), False
 
+
 class Attack(FieldGen):
-    def __init__(self, bzrc, kalman, only_attack_nearby=False, default_factor=1):
+    def __init__(self, bzrc, only_attack_nearby=False, default_factor=1):
         super(Attack, self).__init__(bzrc)
 
-        self.kalman = kalman
+        self.kalman = Kalman(self.bzrc)
         self.threshold = 40000
         self.use_threshold = only_attack_nearby
-        self.shooting_range = 280
         self.default_factor = default_factor
         self.callsign = bzrc.get_mytanks()[0].callsign
-        
 
     def get_sigma_t(self):
-        return self.sigma_t.item((0,0)), self.sigma_t.item((3,3)), self.mu_t.item((0,0)), self.mu_t.item((3,0))
-    
+        return self.sigma_t.item((0, 0)), self.sigma_t.item((3, 3)), self.mu_t.item((0, 0)), self.mu_t.item((3, 0))
+
     def vector_at(self, x, y):
         # only worry about the nearest enemy tank
         tanks = self.bzrc.get_othertanks()
@@ -165,16 +168,17 @@ class Attack(FieldGen):
                 nearest = distance
                 index = i
             i += 1
-        if self.use_threshold and nearest > self.threshold:
-            return Vec2d(0,0), False
 
+        if self.use_threshold and nearest > self.threshold:
+            return Vec2d(0, 0), False
 
         mu_t = self.kalman.get_mu_t(index)
-            
+
         # get the distance between the current tank and the given location
         # distance = location_vector.get_distance(tank_vector)
         # normalize the vector to the tank
         vector_to_position = Vec2d(mu_t.item(0) - x, mu_t.item(3) - y)
-        target_vector = vector_to_position + Vec2d(mu_t.item(1)*(vector_to_position.get_length()/40), mu_t.item(4)*(vector_to_position.get_length()/40))
+        target_vector = vector_to_position + Vec2d(mu_t.item(1) * (vector_to_position.get_length() / 40),
+                                                   mu_t.item(4) * (vector_to_position.get_length() / 40))
 
         return target_vector, True

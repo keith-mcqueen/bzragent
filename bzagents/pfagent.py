@@ -25,11 +25,7 @@ class Agent(object):
         self.enemies = []
         self.angle_diffs_by_tank = {}
 
-        # self.world_map = WorldMap(bzrc)
-
         world_boundaries = WorldBoundaries(bzrc)
-        # obstacles_normal = ObstaclesNormal(bzrc)
-        # obstacles_tangential = ObstaclesTangential(bzrc)
         obstacles_occ_grid = ObstaclesOccGrid(bzrc)
 
         enemies = Enemies(bzrc)
@@ -40,24 +36,18 @@ class Agent(object):
         self.behaviors = {
             "capture": [
                 world_boundaries
-                # , obstacles_tangential
-                # , obstacles_normal
                 , obstacles_occ_grid
                 , enemies
                 , capture_enemy_flags
             ],
             "defend": [
                 world_boundaries
-                # , obstacles_tangential
-                # , obstacles_normal
                 , obstacles_occ_grid
                 , enemies
                 , defend_team_flag
             ],
             "return-to-base": [
                 world_boundaries
-                # , obstacles_tangential
-                # , obstacles_normal
                 , obstacles_occ_grid
                 , enemies
                 , return_to_base
