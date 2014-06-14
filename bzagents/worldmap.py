@@ -2,7 +2,6 @@
 
 import numpy as np
 
-import gridviz
 from bzrc import UnexpectedResponse
 
 
@@ -27,8 +26,8 @@ class WorldMap(object):
         #     self.world_grid[i] = self.default_probability
         #     self.world_grid[:, i] = self.default_probability
 
-        gridviz.init_window(self.world_size, self.world_size)
-        self.update_grid(bzrc)
+        # gridviz.init_window(self.world_size, self.world_size)
+        # self.update_grid(bzrc)
 
     #@set_interval(1.0)
     def update_grid(self, bzrc):
@@ -61,8 +60,8 @@ class WorldMap(object):
 
                     self.world_grid[row, col] = probability
 
-        gridviz.update_grid(self.world_grid)
-        gridviz.draw_grid()
+                    # gridviz.update_grid(self.world_grid)
+                    # gridviz.draw_grid()
 
     def find_point(self, x, y, size, min_val, max_val):
         # if the (x, y) is out of bounds, then just return nothing

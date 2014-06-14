@@ -6,8 +6,7 @@ import time
 
 from bzrc import BZRC, Command
 from vec2d import Vec2d
-
-from obstacles import WorldBoundaries, ObstaclesTangential, ObstaclesNormal
+from obstacles import WorldBoundaries, ObstaclesOccGrid
 from enemies import Enemies
 from flags import CaptureEnemyFlags, DefendTeamFlag, ReturnToBase
 
@@ -29,8 +28,10 @@ class Agent(object):
         # self.world_map = WorldMap(bzrc)
 
         world_boundaries = WorldBoundaries(bzrc)
-        obstacles_normal = ObstaclesNormal(bzrc)
-        obstacles_tangential = ObstaclesTangential(bzrc)
+        # obstacles_normal = ObstaclesNormal(bzrc)
+        # obstacles_tangential = ObstaclesTangential(bzrc)
+        obstacles_occ_grid = ObstaclesOccGrid(bzrc)
+
         enemies = Enemies(bzrc)
         capture_enemy_flags = CaptureEnemyFlags(bzrc)
         defend_team_flag = DefendTeamFlag(bzrc)
@@ -39,22 +40,25 @@ class Agent(object):
         self.behaviors = {
             "capture": [
                 world_boundaries
-                , obstacles_tangential
-                , obstacles_normal
+                # , obstacles_tangential
+                # , obstacles_normal
+                , obstacles_occ_grid
                 , enemies
                 , capture_enemy_flags
             ],
             "defend": [
                 world_boundaries
-                , obstacles_tangential
-                , obstacles_normal
+                # , obstacles_tangential
+                # , obstacles_normal
+                , obstacles_occ_grid
                 , enemies
                 , defend_team_flag
             ],
             "return-to-base": [
                 world_boundaries
-                , obstacles_tangential
-                , obstacles_normal
+                # , obstacles_tangential
+                # , obstacles_normal
+                , obstacles_occ_grid
                 , enemies
                 , return_to_base
             ]

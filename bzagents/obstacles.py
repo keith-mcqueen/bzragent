@@ -1,8 +1,12 @@
 __author__ = 'keith'
 
+import time
+
 from masterfieldgen import FieldGen
 from vec2d import Vec2d
 from bzrc import BZRC
+from worldmap import WorldMap
+
 
 EFFECTIVE_RANGE = 40
 
@@ -35,6 +39,40 @@ class WorldBoundaries(FieldGen):
         # return 0, 0, False
 
 
+class ObstaclesOccGrid(FieldGen):
+    def __init__(self, bzrc):
+        super(ObstaclesOccGrid, self).__init__(bzrc)
+
+        self.bzrc = bzrc
+        self.world_map = WorldMap(bzrc)
+        self.time_diff = 3
+        self.last_time = time.time() - self.time_diff
+
+    def vector_at(self, x, y):
+        # update the occ grid if enough time has passed
+        if time.time() - self.last_time >= self.time_diff:
+            self.world_map.update_grid(self.bzrc)
+            self.last_time = time.time()
+
+        closest_edge = self.world_map.obstacle_edge_at(x, y, EFFECTIVE_RANGE)
+        if closest_edge is None:
+            return Vec2d(0, 0), False
+
+        # position vector
+        vector_s = Vec2d(x, y)
+
+        # vector for endpoint 1
+        vector_a = Vec2d(closest_edge[0])
+
+        # vector for endpoint 2
+        vector_c = Vec2d(closest_edge[1])
+
+        # final vector is the sum of vector from C to S and from A to S
+        final_vector = (vector_s - vector_c) + (vector_s - vector_a)
+
+        return final_vector.normalized(), False
+
+
 class ObstaclesNormal(FieldGen):
     def __init__(self, bzrc):
         super(ObstaclesNormal, self).__init__(bzrc)
@@ -64,36 +102,6 @@ class ObstaclesNormal(FieldGen):
                     return edge.normal, False
 
         return Vec2d(0, 0), False
-
-
-# class ObstaclesTangential(FieldGen):
-#     def __init__(self, bzrc):
-#         super(ObstaclesTangential, self).__init__(bzrc)
-#
-#         self.effective_range = 15
-#         self.obstacles = bzrc.get_obstacles()
-#
-#     def vector_at(self, x, y):
-#         location_vector = Vec2d(x, y)
-#
-#         # for each obstacle, compute it's effect at the given location
-#         for obstacle in self.obstacles:
-#             vector_a = Vec2d(obstacle[0][0], obstacle[0][1])
-#             vector_c = Vec2d(obstacle[2][0], obstacle[2][1])
-#
-#             diameter_vector = vector_a - vector_c
-#             center_vector = vector_c + (0.5 * diameter_vector)
-#             radial_vector = location_vector - center_vector
-#
-#             # if the point lies outside the radius (plus an offset), then skip this obstacle
-#             distance = radial_vector.get_length()
-#             threshold = 0.5 * diameter_vector.get_length() + self.effective_range
-#             if distance > threshold or distance == 0:
-#                 continue
-#
-#             return radial_vector.perpendicular_normal() * (threshold / distance), False
-#
-#         return Vec2d(0, 0), False
 
 
 class ObstaclesTangential(FieldGen):
