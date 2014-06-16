@@ -36,7 +36,7 @@ class Agent(object):
             "capture": [
                 world_boundaries
                 , obstacles_occ_grid
-                , enemies
+                # , enemies
                 , capture_enemy_flags
             ],
             "defend": [
