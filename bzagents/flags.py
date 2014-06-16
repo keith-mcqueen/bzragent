@@ -1,8 +1,10 @@
 __author__ = 'keith'
 
+import math
+import time
+
 from masterfieldgen import FieldGen
 from vec2d import Vec2d
-import math
 
 
 class CaptureEnemyFlags(FieldGen):
@@ -16,16 +18,16 @@ class CaptureEnemyFlags(FieldGen):
         self.team = constants["team"]
         self.world_size_sqrd = int(constants["worldsize"]) ** 2
 
-        self.invocations_before_refresh = 10
-        self.invoked = 0
         self.flags = bzrc.get_flags()
+
+        self.time_diff = 0.1
+        self.last_time = time.time() - self.time_diff
 
     def vector_at(self, x, y):
         # update data if necessary
-        self.invoked += 1
-        if self.invoked >= self.invocations_before_refresh:
+        if time.time() - self.last_time >= self.time_diff:
             self.flags = self.bzrc.get_flags()
-            self.invoked = 0
+            self.last_time = time.time()
 
         best_distance_sqrd = self.world_size_sqrd
         vector_to_nearest_flag = None
@@ -65,16 +67,16 @@ class DefendTeamFlag(FieldGen):
         self.threshold_sqrd = 30 ** 2
         self.team = bzrc.get_constants()["team"]
 
-        self.invocations_before_refresh = 10
-        self.invoked = 0
         self.flags = bzrc.get_flags()
+
+        self.time_diff = 0.1
+        self.last_time = time.time() - self.time_diff
 
     def vector_at(self, x, y):
         # update data if necessary
-        self.invoked += 1
-        if self.invoked >= self.invocations_before_refresh:
+        if time.time() - self.last_time >= self.time_diff:
             self.flags = self.bzrc.get_flags()
-            self.invoked = 0
+            self.last_time = time.time()
 
         for flag in self.flags:
             if flag.color != self.team:
@@ -89,7 +91,7 @@ class DefendTeamFlag(FieldGen):
             else:
                 scale = 1
 
-            return vector_to_flag.normalized() * scale, False
+            return vector_to_flag.normalized() * scale, True
 
 
 class ReturnToBase(FieldGen):
@@ -109,4 +111,4 @@ class ReturnToBase(FieldGen):
     def vector_at(self, x, y):
         vector_to_base = Vec2d(self.my_base.x - x, self.my_base.y - y)
 
-        return vector_to_base.normalized(), False
+        return vector_to_base.normalized(), True

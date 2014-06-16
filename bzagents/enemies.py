@@ -10,6 +10,7 @@ from vec2d import Vec2d
 from masterfieldgen import FieldGen
 
 
+
 # Should share one instance of this class with any object that needs to know enemy tanks'
 # location to avoid redundancy of computing the Kalman matrices in multiple places.
 
@@ -112,15 +113,14 @@ class Enemies(FieldGen):
 
         self.other_tanks = self.bzrc.get_othertanks()
 
-        self.invocations_before_refresh = 10
-        self.invoked = 0
+        self.time_diff = 1
+        self.last_time = time.time() - self.time_diff
 
     def vector_at(self, x, y):
-        # don't get all the tanks every time, but every Nth time
-        self.invoked += 1
-        if self.invoked >= self.invocations_before_refresh:
+        # update data if necessary
+        if time.time() - self.last_time >= self.time_diff:
             self.other_tanks = self.bzrc.get_othertanks()
-            self.invoked = 0
+            self.last_time = time.time()
 
         # go through all the tanks, but only worry about the first one that is within range
         for tank in self.other_tanks:
@@ -138,47 +138,49 @@ class Enemies(FieldGen):
 
 
 class Attack(FieldGen):
-    def __init__(self, bzrc, only_attack_nearby=False, default_factor=1):
+    def __init__(self, bzrc, range):
         super(Attack, self).__init__(bzrc)
 
         self.kalman = Kalman(self.bzrc)
-        self.threshold = 40000
-        self.use_threshold = only_attack_nearby
-        self.default_factor = default_factor
-        self.callsign = bzrc.get_mytanks()[0].callsign
+        self.threshold = range ** 2
+        self.other_tanks = self.bzrc.get_othertanks()
 
-    def get_sigma_t(self):
-        return self.sigma_t.item((0, 0)), self.sigma_t.item((3, 3)), self.mu_t.item((0, 0)), self.mu_t.item((3, 0))
+        self.time_diff = 0.1
+        self.last_time = time.time() - self.time_diff
 
     def vector_at(self, x, y):
-        # only worry about the nearest enemy tank
-        tanks = self.bzrc.get_othertanks()
-        tank = tanks[0]
+        # update data if necessary
+        if time.time() - self.last_time >= self.time_diff:
+            self.other_tanks = self.bzrc.get_othertanks()
+            self.last_time = time.time()
+
         # compute the distance without the square root to speed up computation since it is only used
         # to find which enemy tank is the closest
-        nearest = (x - tank.x) ** 2 + (y - tank.y) ** 2
-        index = 0
+        # nearest = (x - tank.x) ** 2 + (y - tank.y) ** 2
+        nearest = self.threshold
+        index = -1
         i = 0
-        for enemy in tanks:
-            if not tank.status.startswith('alive'):
+        for enemy in self.other_tanks:
+            # skip dead tanks
+            if not enemy.status.startswith('alive'):
                 continue
+
             distance = (x - enemy.x) ** 2 + (y - enemy.y) ** 2
             if distance < nearest:
-                tank = enemy
                 nearest = distance
                 index = i
             i += 1
 
-        if self.use_threshold and nearest > self.threshold:
-            return Vec2d(0, 0), False
+        # if self.use_threshold and nearest > self.threshold:
+        # return Vec2d(0, 0), False
+        if index < 0:
+            return Vec2d(0, 0), True
 
         mu_t = self.kalman.get_mu_t(index)
 
-        # get the distance between the current tank and the given location
-        # distance = location_vector.get_distance(tank_vector)
-        # normalize the vector to the tank
-        vector_to_position = Vec2d(mu_t.item(0) - x, mu_t.item(3) - y)
-        target_vector = vector_to_position + Vec2d(mu_t.item(1) * (vector_to_position.get_length() / 40),
-                                                   mu_t.item(4) * (vector_to_position.get_length() / 40))
+        enemy_position = Vec2d(mu_t.item(0) - x, mu_t.item(3) - y)
+        enemy_distance = enemy_position.get_length() / 40
+        enemy_velocity = Vec2d(mu_t.item(1), mu_t.item(4)) * enemy_distance
+        target_vector = enemy_position + enemy_velocity
 
         return target_vector, True

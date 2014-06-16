@@ -8,14 +8,13 @@ from bzrc import BZRC
 from worldmap import WorldMap
 
 
-EFFECTIVE_RANGE = 40
+EFFECTIVE_RANGE = 15
 
 
 class WorldBoundaries(FieldGen):
     def __init__(self, bzrc):
         super(WorldBoundaries, self).__init__(bzrc)
 
-        self.effective_range = 40
         self.world_size = int(bzrc.get_constants()["worldsize"]) / 2
 
     def vector_at(self, x, y):
